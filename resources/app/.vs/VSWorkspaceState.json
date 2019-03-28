@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\components",
+    "\\src\\components\\admin",
+    "\\src\\components\\animal",
+    "\\src\\components\\client",
+    "\\src\\components\\functions",
+    "\\src\\components\\pages",
+    "\\src\\components\\payment",
+    "\\src\\js"
+  ],
+  "SelectedNode": "\\src\\components\\payment\\Payment.js",
+  "PreviewInSolutionExplorer": false
+}
