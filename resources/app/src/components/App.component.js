@@ -23,7 +23,9 @@ export default class Main extends React.Component {
 			kennel_map: [],
             bozun_objesi: {},
             extraService_List: [],
-            adminSetting:{}
+            adminSetting:{},
+            paid:0
+           
 		}
 		this.grabDogs()
 	}
@@ -47,6 +49,7 @@ export default class Main extends React.Component {
 		this.push_alert = this.push_alert.bind(this)
 		this.push_notif = this.push_notif.bind(this)
 		this.get_print = this.get_print.bind(this)
+		
 	}
 
 	async grabDogs(){
@@ -254,6 +257,8 @@ export default class Main extends React.Component {
 			screen : "home",
 		})
 	}
+
+	
 
 	render(){
 		//order props neatly

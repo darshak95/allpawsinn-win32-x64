@@ -16,6 +16,7 @@
 
 .navbar-default .navbar-nav>li>a:hover {
   color: #cbf0ff;
+  cursor:pointer;
 }
 
 .navbar-default .navbar-brand {
@@ -25,6 +26,7 @@
 .navbar-default .navbar-brand:hover {
   color: #ffffff;
   text-shadow: 1px -1px 8px lightblue;
+  cursor:pointer;
 }
 
 .navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus {

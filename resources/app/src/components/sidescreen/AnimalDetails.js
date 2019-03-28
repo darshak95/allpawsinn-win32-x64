@@ -40,8 +40,8 @@ export default class AnimalDetails extends React.Component {
 					Sex: <b>{this.props.animal[0].Sex}</b> <br></br>
 					Age: <b>{this.props.animal[0].Age}</b> <br></br><br></br>
 					<div className = "profileButtonPanel">
+					    <button className = "profileButton" onClick = {this.get_daycare}>New Daycare</button>
 						<button className = "profileButton" onClick = {this.get_profile}>New Reservation</button>
-						<button className = "profileButton" onClick = {this.get_daycare}>New Daycare</button>
 					</div><br></br>
 					<div className = "profileButtonPanel">
 						<button className = "profileButton" onClick = {this.get_fullprofile}>Full Profile</button>

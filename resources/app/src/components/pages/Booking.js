@@ -1,3 +1,4 @@
+
 //// ---------------------------------------- TO DO ----------------------------------------
 // validate user inputs before querying
 // replace arbitrary kennel number
@@ -60,7 +61,7 @@ export default class Booking extends React.Component {
 				NoDays: 1,
                 BoardingRate: this.props.adminSetting.BookingRate, //35,
 				Discount: this.props.animal[i].Discount
-			}
+			} 
 		}
 
 		this.handleChange = this.handleChange.bind(this)

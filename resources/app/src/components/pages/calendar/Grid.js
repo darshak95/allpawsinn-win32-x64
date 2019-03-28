@@ -6,6 +6,22 @@ import ReactDataGrid from 'react-data-grid';
 let rows = [];
 const rowGetter = rowNumber => rows[rowNumber];
 
+async function updateStatusQuery(bookingObject){
+    const sqlConfig = require('../../../js/sqlconfig')
+    const sql = require('mssql')
+    let pool = await sql.connect(sqlConfig)
+
+    let stat = bookingObject.Status
+    let bookingId = parseInt(bookingObject.BookingID)
+
+    let queryString = "UPDATE dbo.BookingObjects SET dbo.BookingObjects.Status = '" + stat + "' WHERE dbo.BookingObjects.BookingID = " + bookingId
+
+    let result = await pool.request()
+         .query(queryString)
+
+    sql.close()
+}
+
 
 async function updateBookingQuery(bookingObject) {
     const sqlConfig = require('../../../js/sqlconfig')
@@ -43,22 +59,25 @@ export default class Grid extends React.Component {
         this.state = {
             rows,
             selectedIndexes: [],
-            refresh: false
+            refresh: false,
+            paid: false
         }
 
         this._columns = [
-            { key: 'client', name: 'Client', resizable: 'true' },
-            { key: 'dog', name: 'Dog', resizable: 'true' },
-            { key: 'm', name: 'Monday' },
-            { key: 't', name: 'Tuesday' },
-            { key: 'w', name: 'Wednesday' },
-            { key: 'r', name: 'Thursday' },
-            { key: 'f', name: 'Friday' },
-            { key: 's', name: 'Saturday' },
-            { key: 'total', name: 'Check-Out' },
-            { key: 'status', name:"Status" },
-            { key: 'print', name: 'Print' },
-            { key: 'remove', width: 30 }
+            { key: 'client', name: 'Client', resizable: 'true', width:100 },
+            { key: 'dog', name: 'Dog', resizable: 'true', width:60 },
+            { key: 'm', name: 'Monday', width:70 },
+            { key: 't', name: 'Tuesday', width:70 },
+            { key: 'w', name: 'Wednesday', width:80 },
+            { key: 'r', name: 'Thursday', width:80 },
+            { key: 'f', name: 'Friday', width:60 },
+            { key: 's', name: 'Saturday', width:70 },
+            { key: 'amount', name: 'Amount', width:70 },
+            { key: 'pay', name: 'Pay', width: 35 },
+            { key: 'status', name:"Status",width: 80},
+            { key: 'print', name: 'Print',width: 60 },
+            { key: 'remove', name: 'Delete', width: 60 },
+            { key: 'action', name: 'Action', width: 70}
         ];
 
         this.createRows = this.createRows.bind(this)
@@ -69,6 +88,9 @@ export default class Grid extends React.Component {
         this.getCellActions = this.getCellActions.bind(this)
         this.getPayment = this.getPayment.bind(this)
         this.getPrint = this.getPrint.bind(this)
+        this.getStatus = this.getStatus.bind(this)
+        this.getNextAction = this.getNextAction.bind(this)
+        this.changeState = this.changeState.bind(this)
     }
 
     async removeBooking(bookingObject) {
@@ -94,16 +116,80 @@ export default class Grid extends React.Component {
        
     }
 
+   
+
+    getStatus(booking){
+        if(booking.Status == "NCI")
+            return "Not Checked-In"
+        else if(booking.Status == "CI")
+            return "Checked-In"
+        else if(booking.Status == "NCO")
+            return "Not Checked-Out"
+        else
+            return "Checked-Out"
+    }
+
+   
+
+
+
+
+    changeState(obj){
+
+        // NCO - Not Checked Out
+        // NCI - Not Checked In
+        // CO - Checked Out
+        // CI - Checked In
+        let status = '';
+
+        if(obj.Status == "NCI"){
+            status = "CI"
+            obj.Status = status
+            updateStatusQuery(obj)
+        }
+        else{
+            if(obj.Status == "CI") {
+                status="CO"
+                obj.Status = status
+                 updateStatusQuery(obj)
+             }
+                /*this.props.payment(obj)
+            }
+            else if(obj.Status == "NCO")
+                this.props.payment(obj)
+            else
+                this.props.payment(obj)*/
+        }
+
+
+        this.setState({
+            val : 1 //dummy
+        })
+    }
+
+    getNextAction(booking){
+        if(booking.Status == "NCI")
+            return "Check-In"
+        else if(booking.Status == "CI")
+            return "Check-Out"
+        else if(booking.Status == "NCO")
+            return "Check-Out"
+        else
+            return "Check-Out"
+    }
+
+
+
     createRows(booking) {
         let day = (booking.Days)
 
-        let total = booking.NoDays * booking.DayCareRate
+        let amount = booking.NoDays * booking.DayCareRate
 
         let taxRate = this.props.adminSetting.Tax;
 
-        let tax = ((total * taxRate) / 100)
+        let tax = ((amount * taxRate) / 100)
 
-        total = total + tax
+        amount = amount + tax
 
         rows.push({
             client: booking.FirstName + ' ' + booking.LastName,
@@ -114,8 +200,9 @@ export default class Grid extends React.Component {
             r: (day.includes("r")) ? 'X' : '',
             f: (day.includes("f")) ? 'X' : '',
             s: (day.includes("s")) ? 'X' : '',
-            total: total.toFixed(2),
-            status: booking.Status,
+            amount: amount.toFixed(2),
+            status: this.getStatus(booking),
+            //paystatus: this.getPayStatus(booking),
             booking: booking
         }
         );
@@ -186,13 +273,13 @@ export default class Grid extends React.Component {
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'm'
 
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((total * taxRate) / 100)
+                            let tax = ((amount * taxRate) / 100)
 
-                            total = total + tax
-                            this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                            amount = amount + tax
+                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -206,14 +293,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('m', '');
 
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((total * taxRate) / 100)
+                                let tax = ((amount * taxRate) / 100)
 
-                                total = total + tax
-                                this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                                amount = amount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
                     }
@@ -230,14 +317,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 't'
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((total * taxRate) / 100)
+                            let tax = ((amount * taxRate) / 100)
 
-                            total = total + tax
-                            this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                            amount = amount + tax
+                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -250,14 +337,14 @@ export default class Grid extends React.Component {
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('t', '');
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((total * taxRate) / 100)
+                                let tax = ((amount * taxRate) / 100)
 
-                                total = total + tax
-                                this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                                amount = amount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
                     }
@@ -274,14 +361,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'w'
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((total * taxRate) / 100)
+                            let tax = ((amount * taxRate) / 100)
 
-                            total = total + tax
-                            this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                            amount = amount + tax
+                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -295,14 +382,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('w', '');
 
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((total * taxRate) / 100)
+                                let tax = ((amount * taxRate) / 100)
 
-                                total = total + tax
-                                this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                                amount = amount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
                     }
@@ -319,14 +406,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'r'
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((total * taxRate) / 100)
+                            let tax = ((amount * taxRate) / 100)
 
-                            total = total + tax
-                            this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                            amount = amount + tax
+                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -340,14 +427,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('r', '');
 
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((total * taxRate) / 100)
+                                let tax = ((amount * taxRate) / 100)
 
-                                total = total + tax
-                                this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                                amount = amount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
                     }
@@ -364,14 +451,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'f'
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((total * taxRate) / 100)
+                            let tax = ((amount * taxRate) / 100)
 
-                            total = total + tax
-                            this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                            amount = amount + tax
+                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -385,14 +472,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('f', '');
 
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((total * taxRate) / 100)
+                                let tax = ((amount * taxRate) / 100)
 
-                                total = total + tax
-                                this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                                amount = amount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
                     }
@@ -409,14 +496,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 's'
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((total * taxRate) / 100)
+                            let tax = ((amount * taxRate) / 100)
 
-                            total = total + tax
-                            this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                            amount = amount + tax
+                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -430,14 +517,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('s', '');
 
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
 
                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((total * taxRate) / 100)
+                                let tax = ((amount * taxRate) / 100)
 
-                                total = total + tax
-                                this._rows[rowIdx.rowIdx].total = total.toFixed(2)
+                                amount = amount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
                     }
@@ -463,15 +550,20 @@ export default class Grid extends React.Component {
         this._rows = []
     }
 
+     
+
     getCellActions(column, row) {
-        if (column.key === 'total') {
-            return [
+        
+        if (column.key === 'pay' && row.booking.Status == "CO") {
+            
+              return [
                 {
                     icon: 'glyphicon glyphicon-usd',
-                    callback: () => { this.getPayment(row.booking) }
+                    callback: () => { this.getPayment(row.booking)}
                 }
             ];
-        }
+          
+          }  
         if (column.key === 'print') {
             return [
                 {
@@ -488,10 +580,33 @@ export default class Grid extends React.Component {
                 }
             ];
         }
+
+        if (column.key === 'action' && row.booking.Status != "CO") {
+            if(row.booking.Status === "NCI") {
+                return [
+                {
+                    icon: 'glyphicon glyphicon-minus',
+                    callback: () => { this.changeState(row.booking) }
+                }
+            ];
+            }
+            else {
+                return [
+                {
+                    icon: 'glyphicon glyphicon-plus',
+                    callback: () => { this.changeState(row.booking) }
+                }
+            ];
+            }
+        }
+
+    
     }
 
+    
     getPayment(obj) {
         this.props.payment(obj)
+        this.setState({pay : 'Paid'})
         //updateStatusQuery(obj)
     }
 
@@ -500,7 +615,7 @@ export default class Grid extends React.Component {
     }
 
     getList(curList) {
-        // console.log(curList)
+         
         return curList.map(obj =>
             <div key={obj.BookingID}>
                 {this.createRows(obj)}
@@ -516,13 +631,13 @@ export default class Grid extends React.Component {
     render() {
         this.emptyRows()
         const rowText = this.state.selectedIndexes.length === 1 ? 'row' : 'rows';
-        let curList = this.props.current.sort(function (a, b) { return a.DateIn < b.DateIn })
+        let curList = this.props.current;
         // TODO: Add first-to-last & last-to-first switch
         return (
             <div>
                 {this.getList(curList)}
                 {this.setRows()}
-                <div id="dataGrid" style={{ marginTop: '20px' }} >
+                <div id="dataGrid" style={{ marginTop: '20px' }} style={{cursor:'pointer'}}>
                     <ReactDataGrid
                         rowsCount={this.getSize()}
                         ref={node => this.grid = node}
@@ -534,8 +649,28 @@ export default class Grid extends React.Component {
                         onCellSelected={this.onCellSelected}
                         getCellActions={this.getCellActions}
                     />
+                   
                 </div>
             </div>
         )
     }
+
+}
+
+const coStyle = {
+    color : "green",
+    paddingRight : 10,
+    float : "left"
+}
+
+const notStyle = {
+    color : "red",
+    paddingRight : 10,
+    float : "left"
+}
+
+const ciStyle = {
+    color : "#CCCC00",
+    paddingRight : 10,
+    float : "left"
 }

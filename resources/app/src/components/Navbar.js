@@ -8,7 +8,7 @@ export default class Navbar extends React.Component {
 		this.handleChange = this.handleChange.bind(this)
 	}
 
-	handleChange(event){
+	handleChange(event) {
 		let query = event.target.value
 		this.props.side(query)
 	}

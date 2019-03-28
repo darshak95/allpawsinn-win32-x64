@@ -9,7 +9,7 @@ const SearchItem = ({
 }) => {
 	const classes = selected ? 'item selected' : 'item';
 	return (
-		<div className = {classes}>
+		<div className = {classes} style={{cursor:'pointer'}}>
 			<span ><b>{FirstName} {LastName}</b>/<b>{AnimalName}</b><br></br></span>
 		</div>
 	)

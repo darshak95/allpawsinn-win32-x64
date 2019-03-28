@@ -118,6 +118,10 @@ export default class ExtraServices extends React.Component {
                                     <th>
                                         Cost($)
                         </th>
+
+                                    <th>
+                                        Delete
+                        </th>                
                                 </tr>
                             </thead>
                             <tbody>
@@ -129,7 +133,7 @@ export default class ExtraServices extends React.Component {
                                                 <td>{el.ServiceName}</td>
                                                 <td>{el.Cost}</td>
                                                 <td>
-                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true" style={{cursor:'pointer'}}></span></a>
                                                     
                                                 </td>
                                             </tr>

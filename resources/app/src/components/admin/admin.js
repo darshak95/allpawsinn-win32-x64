@@ -5,11 +5,6 @@ const sql = require('mssql')
 const sqlConfig = require('../../js/sqlconfig')
 const booking_lib = require('../../js/bookinglib')
 
-
-
-
-
-
 export default class Admin extends React.Component {
     constructor(props) {
         super(props);
@@ -19,13 +14,14 @@ export default class Admin extends React.Component {
                 DayCareRate: "",
                 BookingRate: "",
                 Tax: "",
-                Discount: "",
+                Discount: ""
             },
             adminSettingList: null
         }
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.handleRowSlection = this.handleRowSlection.bind(this);
+        this.handleDeleteService = this.handleDeleteService.bind(this);
     }
 
     componentDidMount() {
@@ -56,14 +52,14 @@ export default class Admin extends React.Component {
         let pool = await sql.connect(sqlConfig)
         let result = await pool.request().query("SELECT TOP 10 * from dbo.AdminSetting")
         await sql.close()
-        // console.log(result.recordsets)
+         //console.log(result.recordsets)
         this.setState({
             adminSettingList: result.recordsets
         })
     }
 
     handleSubmit(event) {
-        event.preventDefault()
+        event.preventDefault();
         //let adminSetting = {
         //    DayCareRate: event.currentTarget.form[0].value,
         //    BookingRate: event.currentTarget.form[1].value,
@@ -104,9 +100,32 @@ export default class Admin extends React.Component {
 		WHERE dbo.AdminSetting.ID = '${id}'`
 
 
+
+        let result = await pool.request()
+            .
+            query(qr);
+        sql.close()
+    }
+
+    handleDeleteService(event, id) {
+        this.deleteServiceQuery(id);
+        this.state.adminSettingList.pop(this.state.adminSetting);
+        this.props.updateScreen("admin");
+    }
+
+     async deleteServiceQuery(id) {
+        let pool = await sql.connect(sqlConfig)
+
+        let qr = `DELETE from dbo.AdminSetting
+        WHERE dbo.AdminSetting.ID = '${id}'
+
+        UPDATE dbo.AdminSetting SET 
+        dbo.AdminSetting.IsActive = 1 
+        WHERE dbo.AdminSetting.ID IN(SELECT TOP 1 dbo.AdminSetting.ID from dbo.AdminSetting)`
+
         let result = await pool.request()
             .query(qr);
-        sql.close()
+        sql.close();
     }
 
     render() {
@@ -154,7 +173,7 @@ export default class Admin extends React.Component {
                                         Booking Rate($)
                         </th>
                                     <th>
-                                        Tax($)
+                                        Tax(%)
                         </th>
                                     <th>
                                         Discount($)
@@ -162,6 +181,10 @@ export default class Admin extends React.Component {
                                     <th>
                                         Active
                                             </th>
+                                    <th>
+                                        Delete
+                                    </th>    
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -180,6 +203,10 @@ export default class Admin extends React.Component {
                                                         <input type="radio" name="rdbAdminSetting" value="" onChange={(e) => this.handleRowSlection(e, el.ID)} checked />
                                                         : <input type="radio" name="rdbAdminSetting" value="" onChange={(e) => this.handleRowSlection(e, el.ID)} />
                                                     }
+                                                </td>
+                                                <td>
+                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true" style={{cursor:'pointer'}}></span></a>
+                                                    
                                                 </td>
                                             </tr>
                                         )
