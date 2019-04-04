@@ -246,7 +246,7 @@ export default class Main extends React.Component {
 			newobj.Age = animal[i].Age
 			newobj.Breed = animal[i].Breed
 
-			this.state.booking_list.push(newobj)
+			this.state.booking_list.unshift(newobj)
 
 		}
 

@@ -11,7 +11,8 @@ let extraServiceCharges = 0
 let otherCharges = 0
 let payStatus = 0;
 
-async function handleQuery(booking, taxToPay, totalToPay, extraServices) {
+async function handleQuery(booking, taxToPay, totalToPay, dayCareRate,
+        subTotal, discount, netBookingCharges, extraServices) {
     const sqlConfig = require('../../js/sqlconfig')
     const sql = require('mssql')
 
@@ -24,7 +25,10 @@ async function handleQuery(booking, taxToPay, totalToPay, extraServices) {
     let stat = booking.Status
     let bookingId = parseInt(booking.BookingID)
     let queryString = `UPDATE BookingObjects SET Status = '${booking.Status}' WHERE dbo.BookingObjects.BookingID = ${bookingId}`
-    queryString += ` INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices) Values ('${bookingId}' ,${otherCharges} ,${taxToPay} ,${totalToPay} , '${extraServices}')`;
+    queryString += ` INSERT INTO Payments (BookingID,OtherChargersPaid,TaxPaid,TotalChargesPaid,ExtraServices
+    ,DayCareRate,SubTotal,Discount,NetBookingCharges) Values 
+    ('${bookingId}' ,${otherCharges} ,${taxToPay} ,${totalToPay} , '${extraServices}', ${dayCareRate}, ${subTotal}
+    , ${discount}, ${netBookingCharges})`;
     let result = await pool.request()
         .query(queryString)
     sql.close()
@@ -49,7 +53,12 @@ export default class Payment extends React.Component {
             extraServices: this.props.extraServices,
             taxToPay: 0,
             totalToPay: 0,
-            paymentFields: {}
+            paymentFields: {},
+            dayCareRate: 0,
+            subTotal: 0,
+            discount: 0,
+            netBookingCharges: 0
+            
         }
         this.getSubTotal = this.getSubTotal.bind(this)
         this.getTotal = this.getTotal.bind(this)
@@ -62,13 +71,19 @@ export default class Payment extends React.Component {
         this.handleDeleteService = this.handleDeleteService.bind(this)
         this.dropdownSelected = this.dropdownSelected.bind(this)
         this.getPaymentStatus(this.props.booking.BookingID);
+       
     }
-    componentDidMount() {
+    componentDidMount(props) {
         this.extraServiceNames();
         let booking = this.state.booking;
         this.setState({
             taxToPay: parseFloat(this.getTax(booking).toFixed(2)),
-            totalToPay: parseFloat(this.getTotalToPay(booking).toFixed(2))
+            totalToPay: parseFloat(this.getTotalToPay(booking).toFixed(2)),
+            dayCareRate: this.props.adminSetting.DayCareRate,
+            subTotal: parseFloat(this.getSubTotal(booking).toFixed(2)),
+            discount: this.props.adminSetting.Discount,
+            netBookingCharges: parseFloat(this.getTotal(booking).toFixed(2))
+
         });
     }
 
@@ -76,13 +91,15 @@ export default class Payment extends React.Component {
    async getPaymentStatus(bookingId) {
         const sqlConfig = require('../../js/sqlconfig');
         const sql = require('mssql');
-        sql.close()
         let pool = await sql.connect(sqlConfig);
         let result = await pool.request()
             .query("SELECT top 1 * from dbo.Payments Where BookingID = " + bookingId);
         sql.close();
-        console.log(result.recordset[0].BookingID);
-        payStatus = result.recordset[0].BookingID;
+        payStatus = result.recordset[0]
+        if(!payStatus) {
+            return;
+        } else {
+        
         let selectedExtraIDs = result.recordset[0].ExtraServices.split(",");
         let dummySelectedExtras = [];
         selectedExtraIDs.forEach(obj => {
@@ -96,19 +113,18 @@ export default class Payment extends React.Component {
             selectedExtras: dummySelectedExtras,
             paymentFields: result.recordset[0]
         });
-
+      }
     }
 
 
     async getPaymentByBookingId(bookingId) {
-        
-        const sql = require('mssql');
-        sql.close();
         const sqlConfig = require('../../js/sqlconfig');
+        const sql = require('mssql');
         let pool = await sql.connect(sqlConfig);
         let result = await pool.request()
-            .query("SELECT BookingID from dbo.Payments Where BookingID = " + bookingId);
+            .query("SELECT top 1 * from dbo.Payments Where BookingID = " + bookingId);
         sql.close();
+
         let selectedExtraIDs = result.recordset[0].ExtraServices.split(",");
         let dummySelectedExtras = [];
         selectedExtraIDs.forEach(obj => {
@@ -127,7 +143,7 @@ export default class Payment extends React.Component {
     getSubTotal(booking) {
         let rate = 0
         if (booking.DayCare) {
-            rate = booking.DayCareRate
+            rate = this.props.adminSetting.DayCareRate
         }
         else {
             rate = booking.BoardingRate
@@ -138,15 +154,16 @@ export default class Payment extends React.Component {
     }
 
     getTotal(booking) {
-        let total = this.getSubTotal(booking)
-        let discoRate = 0
 
-        if (Array.isArray(booking.Discount)) {
+        let total = this.getSubTotal(booking)
+        let discoRate = this.props.adminSetting.Discount;
+
+        /*if (Array.isArray(booking.Discount)) {
             discoRate = booking.Discount[0]
         }
         else {
             discoRate = booking.Discount
-        }
+        }*/
 
         let disco = (total * discoRate) / 100
 
@@ -169,7 +186,6 @@ export default class Payment extends React.Component {
         let total = this.getTotal(booking)
         let tax = this.getTax(booking)
         let pay = total + tax
-
         return pay;
     }
 
@@ -181,7 +197,9 @@ export default class Payment extends React.Component {
             extraServices.push(obj.ID);
         });
 
-        handleQuery(this.props.booking, this.state.taxToPay, this.state.totalToPay, extraServices.join())
+        handleQuery(this.props.booking, this.state.taxToPay, this.state.totalToPay, this.state.dayCareRate,
+        this.state.subTotal, this.state.discount, this.state.netBookingCharges, 
+         extraServices.join())
         //query kennel map
         event.preventDefault();
         this.props.updateScreen("calendar"); 
@@ -189,7 +207,7 @@ export default class Payment extends React.Component {
 
     handlePrintSubmit(event) {
         window.print()
-    }
+    } 
 
     handleChange(event) {
         //if (event.target.value !== '') {
@@ -339,12 +357,7 @@ export default class Payment extends React.Component {
     //    $('[name="total"]').val((tax + total).toFixed(2));
     //}
     render() {
-        let booking = this.state.booking;
-        bookingChargesToPay = parseFloat(this.getTotal(booking).toFixed(2))
-        //taxToPay = parseFloat(this.getTax(booking).toFixed(2))
-        //totalToPay = parseFloat(this.getTotalToPay(booking).toFixed(2))
-        subToPay = parseFloat(this.getSubTotal(booking).toFixed(2));
-
+          
           if(payStatus) {
             return (
                 <div className="box cal" id="paymentInput" style={left}>
@@ -373,17 +386,18 @@ export default class Payment extends React.Component {
                         <div className="box">
                             <div className="row">
                                 <div className="col-sm-6"><b>Boarding Rate: $ </b>{this.props.booking.BoardingRate != null ? this.props.booking.BoardingRate : ''}<br></br></div>
-                                <div className="col-sm-6"><b>DayCare Rate: $ </b>{this.props.booking.DayCareRate}<br></br></div>
+                                <div className="col-sm-6"><b>DayCare Rate: $ </b>{this.state.paymentFields.DayCareRate}<br></br></div>
                             </div>
 
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Sub Total: $ </b>{subToPay}<br></br></div>
-                                <div className="col-sm-6"><b>Discount: % </b>{!Array.isArray(this.props.booking.Discount) ? this.props.booking.Discount : this.props.booking.Discount[0]}<br></br></div>
+                                <div className="col-sm-6"><b>Sub Total: $ </b>{this.state.paymentFields.SubTotal}<br></br></div>
+                                <div className="col-sm-6"><b>Discount: % </b>{this.state.paymentFields.Discount}<br></br></div>
+                                {/*<div className="col-sm-6"><b>Discount: $ </b>{!Array.isArray(this.props.booking.Discount) ? this.props.booking.Discount : this.props.booking.Discount[0]}<br></br></div>*/}
                             </div>
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Net Booking Charges   $</b>{bookingChargesToPay}<br></br></div>
+                                <div className="col-sm-6"><b>Net Booking Charges   $</b>{this.state.paymentFields.NetBookingCharges}<br></br></div>
                                 <div className="col-sm-6"><b>Other Goods: $ </b>{this.state.paymentFields.OtherChargesPaid}<br></br></div>
                             </div>
                             <hr></hr>
@@ -418,6 +432,7 @@ export default class Payment extends React.Component {
             )
         }
         else {
+
             return (
                 <div className="box cal" id="paymentInput" style={left}>
                     <form>
@@ -445,17 +460,18 @@ export default class Payment extends React.Component {
                         <div className="box">
                             <div className="row">
                                 <div className="col-sm-6"><b>Boarding Rate: $ </b>{this.props.booking.BoardingRate != null ? this.props.booking.BoardingRate : ''}<br></br></div>
-                                <div className="col-sm-6"><b>DayCare Rate: $ </b>{this.props.booking.DayCareRate}<br></br></div>
+                                <div className="col-sm-6"><b>DayCare Rate: $ </b>{this.state.dayCareRate}<br></br></div>
                             </div>
 
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Sub Total: $ </b>{subToPay}<br></br></div>
-                                <div className="col-sm-6"><b>Discount: % </b>{!Array.isArray(this.props.booking.Discount) ? this.props.booking.Discount : this.props.booking.Discount[0]}<br></br></div>
+                                <div className="col-sm-6"><b>Sub Total: $ </b>{this.state.subTotal}<br></br></div>
+                               <div className="col-sm-6"><b>Discount: % </b>{this.state.discount}<br></br></div>
+                                 {/*<div className="col-sm-6"><b>Discount: $ </b>{!Array.isArray(this.props.booking.Discount) ? this.props.booking.Discount : this.props.booking.Discount[0]}<br></br></div>*/}
                             </div>
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Net Booking Charges   $</b>{bookingChargesToPay}<br></br></div>
+                                <div className="col-sm-6"><b>Net Booking Charges   $</b>{this.state.netBookingCharges}<br></br></div>
                                 <div className="col-sm-6"><b>Other Goods: $ </b><input name="others" type="number" onChange={this.handleChange} /><br></br></div>
                             </div>
                             <hr></hr>
@@ -503,3 +519,5 @@ const left = {
     //        <Multiselect data={this.state.extraServices} onChange={this.handleSelectChange} multiple />
     //    </div>
     //                    </div >
+
+    
