@@ -182,14 +182,19 @@ export default class Grid extends React.Component {
 
     createRows(booking) {
         let day = (booking.Days)
-
-        let amount = booking.NoDays * booking.DayCareRate
-
+        let rate = 0;
+        rate = this.props.adminSetting.DayCareRate;
+        let total = booking.NoDays * rate
+        let discoRate = this.props.adminSetting.Discount
+        let afterDiscount = total - discoRate;
         let taxRate = this.props.adminSetting.Tax;
-
-        let tax = ((amount * taxRate) / 100)
-
-        amount = amount + tax
+        let tax = ((afterDiscount * taxRate) / 100);
+        let amount = 0.00;
+        if(booking.Status === 'NCI' || booking.Status === 'CI') {
+        amount = 0.00;
+        } else {
+        amount = afterDiscount + tax
+        }
 
         rows.push({
             client: booking.FirstName + ' ' + booking.LastName,
@@ -202,7 +207,6 @@ export default class Grid extends React.Component {
             s: (day.includes("s")) ? 'X' : '',
             amount: amount.toFixed(2),
             status: this.getStatus(booking),
-            //paystatus: this.getPayStatus(booking),
             booking: booking
         }
         );
@@ -266,7 +270,7 @@ export default class Grid extends React.Component {
                             this._rows[rowIdx.rowIdx].m = 'X';
                             this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
                             if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                console.log(this.props.adminSetting.DayCareRate)
+                            
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
                             }
                             else {
@@ -274,12 +278,15 @@ export default class Grid extends React.Component {
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'm'
 
-                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                            let discoRate = this.props.adminSetting.Discount;
+                            let afterDiscount = total - discoRate;
                             let taxRate = this.props.adminSetting.Tax;
 
-                            let tax = ((amount * taxRate) / 100)
+                            let tax = ((afterDiscount * taxRate) / 100)
+                            
+                            let amount = afterDiscount + tax
 
-                            amount = amount + tax
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
@@ -294,13 +301,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('m', '');
 
-                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((amount * taxRate) / 100)
-                                
-                                amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -318,13 +326,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 't'
-                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                            let taxRate = this.props.adminSetting.Tax;
-
-                            let tax = ((amount * taxRate) / 100)
-
-                            amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
@@ -338,13 +347,14 @@ export default class Grid extends React.Component {
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('t', '');
-                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((amount * taxRate) / 100)
-
-                                amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -362,13 +372,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'w'
-                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                            let taxRate = this.props.adminSetting.Tax;
-
-                            let tax = ((amount * taxRate) / 100)
-
-                            amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
@@ -383,13 +394,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('w', '');
 
-                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((amount * taxRate) / 100)
-
-                                amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -407,13 +419,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'r'
-                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                            let taxRate = this.props.adminSetting.Tax;
-
-                            let tax = ((amount * taxRate) / 100)
-
-                            amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
@@ -428,13 +441,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('r', '');
 
-                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((amount * taxRate) / 100)
-
-                                amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100);
+                            
+                                let amount = afterDiscount + tax;
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -452,13 +466,14 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'f'
-                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                            let taxRate = this.props.adminSetting.Tax;
-
-                            let tax = ((amount * taxRate) / 100)
-
-                            amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
@@ -473,13 +488,14 @@ export default class Grid extends React.Component {
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('f', '');
 
-                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((amount * taxRate) / 100)
-
-                                amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -491,19 +507,19 @@ export default class Grid extends React.Component {
                             this._rows[rowIdx.rowIdx].s = 'X'
                             this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
                             if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
                             }
                             else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
                             }
                             this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 's'
-                            let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                            let taxRate = this.props.adminSetting.Tax;
-
-                            let tax = ((amount * taxRate) / 100)
-
-                            amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
@@ -511,20 +527,21 @@ export default class Grid extends React.Component {
                                 this._rows[rowIdx.rowIdx].s = ''
                                 this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
                                 if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
                                 }
                                 else {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
                                 }
                                 this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('s', '');
 
-                                let amount = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                 let discoRate = this.props.adminSetting.Discount;
+                                 let afterDiscount = total - discoRate;
+                                 let taxRate = this.props.adminSetting.Tax;
 
-                                let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((amount * taxRate) / 100)
-
-                                amount = amount + tax
+                                let tax = ((afterDiscount * taxRate) / 100)
+                            
+                                let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
