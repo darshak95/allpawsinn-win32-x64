@@ -144,7 +144,7 @@ export default class Grid extends React.Component {
             sql.close()
 
             return totalChargesPaid;
-    }*/
+    } */
 
    
     getStatus(booking){

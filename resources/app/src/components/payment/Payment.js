@@ -57,8 +57,9 @@ export default class Payment extends React.Component {
             subTotal: 0,
             discount: 0,
             netBookingCharges: 0,
-            otherCharges: 0
-            
+            otherCharges: 0,
+            amountReceived: 0,
+            accountBalance: 0
         }
         this.getSubTotal = this.getSubTotal.bind(this)
         this.getTotal = this.getTotal.bind(this)
@@ -68,6 +69,7 @@ export default class Payment extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleChangeDiscount = this.handleChangeDiscount.bind(this)
+        this.handleAmountReceived = this.handleAmountReceived.bind(this)
         this.extraServiceNames = this.extraServiceNames.bind(this)
         this.handleDeleteService = this.handleDeleteService.bind(this)
         this.dropdownSelected = this.dropdownSelected.bind(this)
@@ -376,6 +378,18 @@ export default class Payment extends React.Component {
     //    $('[name="tax"]').val((tax).toFixed(2));
     //    $('[name="total"]').val((tax + total).toFixed(2));
     //}
+
+    handleAmountReceived(event) {
+
+        let amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
+        let accountBalance = this.state.totalToPay - amountReceived;
+
+        this.setState({
+            amountReceived : amountReceived,
+            accountBalance : accountBalance
+        }) 
+
+    }
     render() {
           
           if(payStatus) {
@@ -517,8 +531,8 @@ export default class Payment extends React.Component {
                             </div>
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Acc Balance  $</b><input disabled id="txtTax" name="tax" type="text" /><br></br></div>
-                                <div className="col-sm-6"><b>Amt Received $</b><input id="txtTotal" name="total" type="number" /><br></br></div>
+                                <div className="col-sm-6"><b>Acc Balance  $</b><input disabled id="AccBal" name="tax" type="text" value={this.state.accountBalance} /><br></br></div>
+                                <div className="col-sm-6"><b>Amt Received $</b><input id="AmtRecv" name="total" type="number" min='0' max={this.state.totalToPay} onChange={this.handleAmountReceived} value={this.state.amountReceived} /><br></br></div>
                             </div>
 
                         </div>
