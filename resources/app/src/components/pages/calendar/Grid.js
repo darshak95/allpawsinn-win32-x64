@@ -116,8 +116,37 @@ export default class Grid extends React.Component {
        
     }
 
-   
+   /* async idExists(bookingId) {
+        const sqlConfig = require('../../../js/sqlconfig')
+        const sql = require('mssql')
+        sql.close();
+        let pool = await sql.connect(sqlConfig)
+        let totalChargesPaid = 0;
 
+        let queryString = "SELECT TotalChargesPaid from Payments Where BookingID =" + bookingId ;
+
+        let result = await pool.request()
+            .query(queryString)
+            .catch((err) => {
+                
+                alert("Error")
+            })
+            
+            if(result.recordset[0]) {
+
+                totalChargesPaid = result.recordset[0].TotalChargesPaid;
+            } else {
+
+                totalChargesPaid = result.recordset[0];
+            }
+        
+
+            sql.close()
+
+            return totalChargesPaid;
+    }*/
+
+   
     getStatus(booking){
         if(booking.Status == "NCI")
             return "Not Checked-In"
@@ -130,9 +159,6 @@ export default class Grid extends React.Component {
     }
 
    
-
-
-
 
     changeState(obj){
 
@@ -163,7 +189,7 @@ export default class Grid extends React.Component {
 
 
         this.setState({
-            val : 1 //dummy
+            val : 1 
         })
     }
 
@@ -193,7 +219,20 @@ export default class Grid extends React.Component {
         if(booking.Status === 'NCI' || booking.Status === 'CI') {
         amount = 0.00;
         } else {
-        amount = afterDiscount + tax
+
+        amount = afterDiscount + tax;   
+            /*this.idExists(booking.BookingID)
+            .then(res => {
+               if(res) {
+                amount = res;
+                
+            } else {
+                amount = afterDiscount + tax;
+                console.log(amount);
+
+            }
+            })*/
+           
         }
 
         rows.push({
@@ -210,6 +249,7 @@ export default class Grid extends React.Component {
             booking: booking
         }
         );
+    
     }
 
     rowGetter(i) {
@@ -260,13 +300,12 @@ export default class Grid extends React.Component {
         }
         if (rowIdx.idx >= 2 && rowIdx.idx <= 7) {
             if (this._rows[rowIdx.rowIdx].booking.Status == "CO") {
-                alert("Changes can't be made as payment has been received!");
+                alert("Changes can't be made as the customer has checked out");
                 return;
             }
 
             switch (rowIdx.idx) {
                 case 2:
-
                     if (dayNo <= 1) {
                         if (this._rows[rowIdx.rowIdx].m !== 'X') {
                             this._rows[rowIdx.rowIdx].m = 'X';
@@ -288,10 +327,14 @@ export default class Grid extends React.Component {
                             let tax = ((afterDiscount * taxRate) / 100)
                             
                             let amount = afterDiscount + tax
-                            console.log("dayNo: ", dayNo);
+
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
+                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===1) {
+                                alert("You can't make changes now!");
+                                return;
+                            }
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
                                 this._rows[rowIdx.rowIdx].m = ''
                                 this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
@@ -311,7 +354,6 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -337,10 +379,13 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
+                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===2) {
+                                alert("You can't make changes now!");
+                                return;
+                            }
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
                                 this._rows[rowIdx.rowIdx].t = ''
                                 this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
@@ -359,7 +404,6 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -385,10 +429,13 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
+                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===3) {
+                                alert("You can't make changes now!");
+                                return;
+                            }
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
                                 this._rows[rowIdx.rowIdx].w = ''
                                 this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
@@ -408,7 +455,6 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -434,10 +480,13 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
+                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===4) {
+                                alert("You can't make changes now!");
+                                return;
+                            }
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
                                 this._rows[rowIdx.rowIdx].r = ''
                                 this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
@@ -457,7 +506,6 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100);
                             
                                 let amount = afterDiscount + tax;
-                                console.log("dayNo: ", dayNo);
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -483,12 +531,11 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
-                            if (this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo == 5) {
-                                alert("Changes can't be made after Checked-In!");
+                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===5) {
+                                alert("You can't make changes now!");
                                 return;
                             }
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -510,7 +557,6 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
@@ -535,12 +581,11 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                             this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                         }
                         else {
-                            if (this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo == 6) {
-                                alert("Changes can't be made after Checked-In!");
+                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo === 6) {
+                                alert("You can't make changes now!");
                                 return;
                             }
                             if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
@@ -562,7 +607,6 @@ export default class Grid extends React.Component {
                                 let tax = ((afterDiscount * taxRate) / 100)
                             
                                 let amount = afterDiscount + tax
-                                console.log("dayNo: ", dayNo);
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                         }
