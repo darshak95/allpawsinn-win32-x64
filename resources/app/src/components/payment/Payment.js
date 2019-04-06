@@ -10,7 +10,7 @@ let subToPay = 0
 let extraServiceCharges = 0
 let payStatus = 0;
 
-async function handleQuery(booking, taxToPay, totalToPay, dayCareRate,
+async function handleQuery(booking, taxToPay, totalToPay, otherChargesPaid, dayCareRate,
         subTotal, discount, netBookingCharges, extraServices) {
     const sqlConfig = require('../../js/sqlconfig')
     const sql = require('mssql')
@@ -24,7 +24,7 @@ async function handleQuery(booking, taxToPay, totalToPay, dayCareRate,
     let stat = booking.Status
     let bookingId = parseInt(booking.BookingID)
     let queryString = `UPDATE BookingObjects SET Status = '${booking.Status}' WHERE dbo.BookingObjects.BookingID = ${bookingId}`
-    queryString += ` INSERT INTO Payments (BookingID,OtherChargersPaid,TaxPaid,TotalChargesPaid,ExtraServices
+    queryString += ` INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices
     ,DayCareRate,SubTotal,Discount,NetBookingCharges) Values 
     ('${bookingId}' ,${otherCharges} ,${taxToPay} ,${totalToPay} , '${extraServices}', ${dayCareRate}, ${subTotal}
     , ${discount}, ${netBookingCharges})`;
@@ -515,6 +515,11 @@ export default class Payment extends React.Component {
                                         })
                                     }
                                 </div>
+                            </div>
+                            <hr></hr>
+                            <div className="row">
+                                <div className="col-sm-6"><b>Account Balance left   $</b><input disabled id="ttlBal" name="bal" type="text" value={this.state.taxToPay} /><br></br></div>
+                                <div className="col-sm-6"><b>Amount Received    $</b><input disabled id="txtTotal" name="total" type="text" value={this.state.totalToPay} /><br></br></div>
                             </div>
 
                         </div>
