@@ -10,7 +10,7 @@ let subToPay = 0
 let extraServiceCharges = 0
 let payStatus = 0;
 
-async function handleQueryPayments(booking, taxToPay, totalToPay, otherChargesPaid, dayCareRate,
+/*async function handleQueryPayments(booking, taxToPay, totalToPay, otherChargesPaid, dayCareRate,
         subTotal, discount, netBookingCharges, extraServices) {
     const sqlConfig = require('../../js/sqlconfig')
     const sql = require('mssql')
@@ -32,22 +32,8 @@ async function handleQueryPayments(booking, taxToPay, totalToPay, otherChargesPa
         .query(queryString)
     sql.close()
 }
+*/
 
-async function handleQueryClientDetails(booking, accountBalance) {
-    const sqlConfig = require('../../js/sqlconfig')
-    const sql = require('mssql')
-    sql.close();
-    let pool = await sql.connect(sqlConfig)
-    let bookingId = parseInt(booking.BookingID)
-    let queryString1 = `SELECT dbo.ClientDetails.AccountBalance FROM dbo.ClientDetails WHERE dbo.ClientDetails.ClientID = ${booking.ClientID[0]}`;
-    let result1 = await pool.request()
-        .query(queryString1)  
-    let currBal = parseFloat(result1.recordset[0].AccountBalance) + parseFloat(accountBalance);
-    let queryString2 = `UPDATE dbo.ClientDetails SET dbo.ClientDetails.AccountBalance = ${currBal} WHERE dbo.ClientDetails.ClientID = ${booking.ClientID[0]}`;
-    let result2 = await pool.request()
-        .query(queryString2)
-    sql.close()
-}
 
 export default class Payment extends React.Component {
     constructor(props) {
@@ -74,8 +60,8 @@ export default class Payment extends React.Component {
             discount: 0,
             netBookingCharges: 0,
             otherCharges: 0,
-            amountReceived: 0,
-            accountBalance: 0
+            accountBalance: 0,
+            amountReceived: 0
         }
         this.getSubTotal = this.getSubTotal.bind(this)
         this.getTotal = this.getTotal.bind(this)
@@ -90,11 +76,11 @@ export default class Payment extends React.Component {
         this.handleDeleteService = this.handleDeleteService.bind(this)
         this.dropdownSelected = this.dropdownSelected.bind(this)
         this.getPaymentStatus(this.props.booking.BookingID);
-       
+        
     }
     componentDidMount(props) {
         this.extraServiceNames();
-        let booking = this.state.booking;
+        let booking = this.props.booking;
         this.setState({
             taxToPay: parseFloat(this.getTax(booking).toFixed(2)),
             totalToPay: parseFloat(this.getTotalToPay(booking).toFixed(2)),
@@ -106,10 +92,49 @@ export default class Payment extends React.Component {
         });
     }
 
+    async handleQueryClientDetails(taxToPay, totalToPay, otherChargesPaid, dayCareRate,
+        subTotal, discount, netBookingCharges, extraServices, accountBalance) {
+    const sqlConfig = require('../../js/sqlconfig')
+    const sql = require('mssql')
+    let pool = await sql.connect(sqlConfig)
+    let bookingId = parseInt(this.props.booking.BookingID)
+    let stat = this.props.booking.Status
+    let id = this.props.booking.KennelID
+    let queryString1 = `Select * from dbo.Payments Where dbo.Payments.BookingID = ${bookingId}`;
+    let result1 = await pool.request()
+        .query(queryString1)
+    
+    if(!result1.recordset[0]) {
+
+       let queryString4 = "Update dbo.KennelOccupancy SET Occupancy = 0 WHERE ID = " + id
+        await pool.request()
+        .query(queryString4)
+
+     let queryString5 = `UPDATE BookingObjects SET Status = '${this.props.booking.Status}' WHERE dbo.BookingObjects.BookingID = ${bookingId}`
+    queryString5 += ` INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices
+    ,DayCareRate,SubTotal,Discount,NetBookingCharges) Values 
+    ('${bookingId}' ,${otherChargesPaid} ,${taxToPay} ,${totalToPay} , '${extraServices}', ${dayCareRate}, ${subTotal}
+    , ${discount}, ${netBookingCharges})`;
+    let result4 = await pool.request()
+        .query(queryString5) 
+    } 
+    
+    let queryString2 = `SELECT dbo.ClientDetails.AccountBalance FROM dbo.ClientDetails WHERE dbo.ClientDetails.ClientID = ${this.props.booking.ClientID[0]}`;
+    let result2 = await pool.request()
+        .query(queryString2)  
+    let currBal = parseFloat(accountBalance);
+    let queryString3 = `UPDATE dbo.ClientDetails SET dbo.ClientDetails.AccountBalance = ${currBal} WHERE dbo.ClientDetails.ClientID = ${this.props.booking.ClientID[0]}`;
+    let result3 = await pool.request()
+        .query(queryString3)
+     
+    sql.close()
+}
+
 
    async getPaymentStatus(bookingId) {
         const sqlConfig = require('../../js/sqlconfig');
         const sql = require('mssql');
+        sql.close();
         let pool = await sql.connect(sqlConfig);
         let result = await pool.request()
             .query("SELECT top 1 * from dbo.Payments Where BookingID = " + bookingId);
@@ -201,16 +226,26 @@ export default class Payment extends React.Component {
         this.props.kennel_map[this.props.booking.KennelID] = 0
        // this.props.booking.Status = 'CO'
         let extraServices = [];
+        let accountBalance = 0;
+        if(this.props.booking.AccountBalance === 0 || this.props.booking.AccountBalance === null) {
+            accountBalance = this.state.totalToPay - this.state.amountReceived;
+        } else {
+            accountBalance = this.props.booking.AccountBalance - this.state.amountReceived;
+        }
         this.state.selectedExtras.forEach(obj => {
             extraServices.push(obj.ID);
         });
 
-        handleQueryPayments(this.props.booking, this.state.taxToPay, this.state.totalToPay, this.state.otherCharges, this.state.dayCareRate,
+       /* handleQueryPayments(this.props.booking, this.state.taxToPay, this.state.totalToPay, this.state.otherCharges, this.state.dayCareRate,
         this.state.subTotal, this.state.discount, this.state.netBookingCharges, 
-         extraServices.join());
+         extraServices.join());*/
         
-        handleQueryClientDetails(this.props.booking, this.state.accountBalance);
+        this.handleQueryClientDetails(this.state.taxToPay, this.state.totalToPay, this.state.otherCharges, this.state.dayCareRate,
+        this.state.subTotal, this.state.discount, this.state.netBookingCharges, 
+         extraServices.join(), accountBalance);
+
         event.preventDefault();
+
         this.props.updateScreen("calendar"); 
     }
 
@@ -398,18 +433,34 @@ export default class Payment extends React.Component {
 
     handleAmountReceived(event) {
 
-        let amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
-        let accountBalance = (this.state.totalToPay - amountReceived).toFixed(2);
+        let amountReceived = 0.00;
+        let accountBalance = 0.00;
+        console.log('PROPS ACC BAL:', this.props.booking.AccountBalance);
+        if(this.props.booking.AccountBalance === 0.00) {
+            amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
+            accountBalance = (this.state.totalToPay - amountReceived).toFixed(2);
+        }
+
+        else {
+            amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
+            accountBalance = (this.props.booking.AccountBalance - amountReceived).toFixed(2);
+        }
+
+        console.log('AFTER trans');
+        console.log('Acc Bal:', accountBalance);
+        console.log('Amt Recvd:', amountReceived);
 
         this.setState({
-            amountReceived : amountReceived,
-            accountBalance : accountBalance
+            accountBalance : accountBalance,
+            amountReceived : amountReceived
+    
         }) 
 
     }
     render() {
-          
-          if(payStatus) {
+  
+          if(payStatus && this.props.booking.AccountBalance === 0.00) {
+        
             return (
                 <div className="box cal" id="paymentInput" style={left}>
                     <form>
@@ -483,7 +534,6 @@ export default class Payment extends React.Component {
             )
         }
         else {
-
             return (
                 <div className="box cal" id="paymentInput" style={left}>
                     <form>
@@ -548,7 +598,7 @@ export default class Payment extends React.Component {
                             </div>
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Acc Balance  $</b><input disabled id="AccBal" name="tax" type="number" value={this.state.accountBalance} /><br></br></div>
+                                <div className="col-sm-6"><b>Acc Balance  $</b><input disabled id="AccBal" name="tax" type="number" value={!this.props.booking.AccountBalance ? 0 : this.props.booking.AccountBalance} /><br></br></div>
                                 <div className="col-sm-6"><b>Amt Received $</b><input id="AmtRecv" name="total" type="number" min='0' max={this.state.totalToPay} onChange={this.handleAmountReceived} value={this.state.amountReceived} /><br></br></div>
                             </div>
 
