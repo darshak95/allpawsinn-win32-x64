@@ -638,6 +638,7 @@ export default class Grid extends React.Component {
     getCellActions(column, row) {
         
         if (column.key === 'pay' && row.booking.Status == "CO") {
+            if(row.booking.BookingCharge  > 0 || row.booking.BookingCharge === null) {
             
               return [
                 {
@@ -646,7 +647,18 @@ export default class Grid extends React.Component {
                 }
             ];
           
-          }  
+          } else if(row.booking.BookingCharge === 0) {
+              
+               return [
+                {
+                    icon: 'glyphicon glyphicon-ok',
+                    callback: () => { this.getPayment(row.booking)}
+                }
+            ];   
+
+          }
+
+         }  
         if (column.key === 'print') {
             return [
                 {
