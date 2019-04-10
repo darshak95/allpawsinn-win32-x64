@@ -219,19 +219,11 @@ export default class Grid extends React.Component {
         if(booking.Status === 'NCI' || booking.Status === 'CI') {
         amount = 0.00;
         } else {
-
-        amount = afterDiscount + tax;   
-            /*this.idExists(booking.BookingID)
-            .then(res => {
-               if(res) {
-                amount = res;
-                
+             if(!booking.TotalToPay) {
+                amount = afterDiscount + tax;   
             } else {
-                amount = afterDiscount + tax;
-                console.log(amount);
-
+                amount = booking.TotalToPay;
             }
-            })*/
            
         }
 
@@ -251,6 +243,8 @@ export default class Grid extends React.Component {
         );
     
     }
+
+
 
     rowGetter(i) {
         return this._rows[i];

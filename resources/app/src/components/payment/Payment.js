@@ -92,37 +92,74 @@ export default class Payment extends React.Component {
     }
 
     async handleQueryClientDetails(taxToPay, totalToPay, otherChargesPaid, dayCareRate,
-        subTotal, discount, netBookingCharges, extraServices, bookingBalance) {
-    const sqlConfig = require('../../js/sqlconfig')
-    const sql = require('mssql')
-    let pool = await sql.connect(sqlConfig)
-    let bookingId = parseInt(this.props.booking.BookingID)
-    let stat = this.props.booking.Status
-    let id = this.props.booking.KennelID
-    let queryString1 = `Select * from dbo.Payments Where dbo.Payments.BookingID = ${bookingId}`;
-    let result1 = await pool.request()
-        .query(queryString1)
-    
-    if(!result1.recordset[0]) {
+        subTotal, discount, netBookingCharges, extraServices, bookingBalance, accountBalance) {
+        const sqlConfig = require('../../js/sqlconfig')
+        const sql = require('mssql')
+        let pool = await sql.connect(sqlConfig)
+        let bookingId = parseInt(this.props.booking.BookingID)
+        let stat = this.props.booking.Status
+        let id = this.props.booking.KennelID
+        let accBal = 0.00;
+        let udpateAccBal = false;
+        let queryString1 = `Select * from dbo.Payments Where dbo.Payments.BookingID = ${bookingId}`;
+        let result1 = await pool.request()
+            .query(queryString1)
+        
+        
+        if(!result1.recordset[0]) {
 
-       let queryString4 = "Update dbo.KennelOccupancy SET Occupancy = 0 WHERE ID = " + id
-        await pool.request()
-        .query(queryString4)
+           let queryString4 = "Update dbo.KennelOccupancy SET Occupancy = 0 WHERE ID = " + id
+            await pool.request()
+            .query(queryString4)
 
-     let queryString5 = `UPDATE BookingObjects SET Status = '${this.props.booking.Status}' WHERE dbo.BookingObjects.BookingID = ${bookingId}`
-    queryString5 += ` INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices
-    ,DayCareRate,SubTotal,Discount,NetBookingCharges) Values 
-    ('${bookingId}' ,${otherChargesPaid} ,${taxToPay} ,${totalToPay} , '${extraServices}', ${dayCareRate}, ${subTotal}
-    , ${discount}, ${netBookingCharges})`;
-    let result4 = await pool.request()
-        .query(queryString5) 
-    } 
-    
-    
+        let queryString5 = `UPDATE BookingObjects SET Status = '${this.props.booking.Status}',TotalToPay=${this.state.totalToPay} WHERE dbo.BookingObjects.BookingID = ${bookingId}`
+        queryString5 += ` INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices
+        ,DayCareRate,SubTotal,Discount,NetBookingCharges) Values 
+        ('${bookingId}' ,${otherChargesPaid} ,${taxToPay} ,${totalToPay} , '${extraServices}', ${dayCareRate}, ${subTotal}
+        , ${discount}, ${netBookingCharges})`;
+        let result4 = await pool.request()
+            .query(queryString5)
+
+        let queryString6 = `Select AccountBalance from dbo.ClientDetails WHERE ClientID =` + this.props.booking.ClientID[0];
+        let result6 = await pool.request()
+            .query(queryString6)
+        
+        if(!result6.recordset[0].AccountBalance) {
+            accBal = parseFloat(accountBalance);
+        } else {
+            accBal = parseFloat(result6.recordset[0].AccountBalance) + parseFloat(accountBalance);
+            }
+
+        udpateAccBal = true;
+          
+        let queryString7 = `UPDATE dbo.ClientDetails SET AccountBalance = ${accBal} WHERE ClientID = ${this.props.booking.ClientID[0]}`
+        console.log('FRESH UPDATE:', accBal);
+        let result7 = await pool.request()
+            .query(queryString7)
+    }
+
     let currBal = parseFloat(bookingBalance);
     let queryString3 = `UPDATE dbo.BookingObjects SET dbo.BookingObjects.BookingCharge = ${currBal} WHERE dbo.BookingObjects.BookingID = ${this.props.booking.BookingID}`;
+
     let result3 = await pool.request()
         .query(queryString3)
+
+    if(!udpateAccBal) {
+        let queryString8 = `Select AccountBalance from dbo.ClientDetails WHERE ClientID =` + this.props.booking.ClientID[0];
+        let result8 = await pool.request()
+            .query(queryString8)
+
+        console.log('UPDATED BAL:', result8.recordset[0].AccountBalance);
+        console.log('AMT RECVD:', this.state.amountReceived);
+        accBal = parseFloat(result8.recordset[0].AccountBalance) - this.state.amountReceived;
+
+        console.log('ACC BAL BEFORE PUSH:', accBal);
+        let queryString9 = `UPDATE dbo.ClientDetails SET AccountBalance = ${accBal} WHERE ClientID = ${this.props.booking.ClientID[0]}`
+        let result9 = await pool.request()
+            .query(queryString9)
+
+        udpateAccBal = true;
+    }
      
     sql.close()
 }
@@ -224,11 +261,14 @@ export default class Payment extends React.Component {
        // this.props.booking.Status = 'CO'
         let extraServices = [];
         let bookingBalance = 0.00;
+        let accountBalance = 0.00;
         if(this.props.booking.BookingCharge === 0 || this.props.booking.BookingCharge === null) {
             bookingBalance = this.state.totalToPay - this.state.amountReceived;
         } else {
             bookingBalance = this.props.booking.BookingCharge - this.state.amountReceived;
         }
+
+        accountBalance = this.state.totalToPay - this.state.amountReceived;
         this.state.selectedExtras.forEach(obj => {
             extraServices.push(obj.ID);
         });
@@ -239,7 +279,7 @@ export default class Payment extends React.Component {
         
         this.handleQueryClientDetails(this.state.taxToPay, this.state.totalToPay, this.state.otherCharges, this.state.dayCareRate,
         this.state.subTotal, this.state.discount, this.state.netBookingCharges, 
-         extraServices.join(), bookingBalance);
+         extraServices.join(), bookingBalance, accountBalance);
 
         event.preventDefault();
 
@@ -431,8 +471,9 @@ export default class Payment extends React.Component {
     handleAmountReceived(event) {
 
         let amountReceived = 0.00;
-        amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
-      /*  console.log('PROPS ACC BAL:', this.props.booking.AccountBalance);
+        amountReceived = (event.currentTarget.form[7].value !== '') ? parseFloat(event.currentTarget.form[7].value) : parseFloat(0);
+       
+        /*  console.log('PROPS ACC BAL:', this.props.booking.AccountBalance);
         if(this.props.booking.AccountBalance === 0.00 || this.props.booking.AccountBalance === null) {
             amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
             accountBalance = (this.state.totalToPay - amountReceived).toFixed(2);
@@ -531,7 +572,7 @@ export default class Payment extends React.Component {
             )
         }
         else {
-            console.log(this.props.booking);
+            
             return (
                 <div className="box cal" id="paymentInput" style={left}>
                     <form>
@@ -576,7 +617,7 @@ export default class Payment extends React.Component {
                             <hr></hr>
                             <div className="row">
                                 <div className="col-sm-6"><b>NY State Tax   $</b><input disabled id="txtTax" name="tax" type="text" value={this.state.taxToPay} /><br></br></div>
-                                <div className="col-sm-6"><b>Total To Pay   $</b><input disabled id="txtTotal" name="total" type="text" value={this.state.totalToPay} /><br></br></div>
+                                <div className="col-sm-6"><b>Total To Pay   $</b><input disabled id="txtTotal" style={{backgroundColor: "green", fontWeight:"bold",color:"white"}} name="total" type="text" value={!this.props.booking.TotalToPay ? this.state.totalToPay : this.props.booking.TotalToPay} /><br></br></div>
                             </div>
                             <hr></hr>
                             <div className="row">
@@ -594,18 +635,16 @@ export default class Payment extends React.Component {
                                     }
                                 </div>
                             </div>
+                            <hr style={{border: "none", borderBottom: "1px solid black"}}></hr>
+                            <div className="row">
+                                <div className="col-sm-6"><b>Book Balance $</b><input disabled id="BookBal" name="book" type="number" value={!this.props.booking.BookingCharge ? 0 : this.props.booking.BookingCharge} /><br></br></div>
+                                <div className="col-sm-6"><b>Acct Balance $</b><input disabled id="AcctBal" name="acctbal" type="number" value={!this.props.booking.AccountBalance ? this.state.totalToPay : (!payStatus) ? (this.props.booking.AccountBalance + this.state.totalToPay).toFixed(2) : this.props.booking.AccountBalance} /><br></br></div>
+                            </div>
+
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Book Balance $</b><input disabled id="AccBal" name="tax" type="number" value={!this.props.booking.BookingCharge ? 0 : this.props.booking.BookingCharge} /><br></br></div>
-                                <div className="col-sm-6"><b>Amt Received $</b><input id="AmtRecv" name="total" type="number" min='0' max={this.state.totalToPay} onChange={this.handleAmountReceived} value={this.state.amountReceived} /><br></br></div>
+                              <div className="col-sm-6"><b>Amt Received $</b><input id="AmtRecv" name="total" type="number" min='0' max={!this.props.booking.TotalToPay ? this.state.totalToPay : this.props.booking.BookingCharge} onChange={this.handleAmountReceived} value={this.state.amountReceived} /><br></br></div>
                             </div>
-
-                             <hr></hr>
-                            <div className="row">
-                                <div className="col-sm-6"><b>Book Balance $</b><input disabled id="AccBal" name="tax" type="number" value={!this.props.booking.BookingCharge ? 0 : this.props.booking.BookingCharge} /><br></br></div>
-                                <div className="col-sm-6"><b>Amt Received $</b><input id="AmtRecv" name="total" type="number" min='0' max={this.state.totalToPay} onChange={this.handleAmountReceived} value={this.state.amountReceived} /><br></br></div>
-                            </div>
-
                         </div>
                         <br></br>
                         <button className="profileButton" onClick={this.handleSubmit}> Take Payment </button>
