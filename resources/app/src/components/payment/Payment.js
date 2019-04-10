@@ -606,13 +606,30 @@ export default class Payment extends React.Component {
                             <hr></hr>
                             <div className="row">
                                 <div className="col-sm-6"><b>Sub Total: $ </b>{this.state.subTotal}<br></br></div>
-                               <div className="col-sm-6"><b>Discount: $ </b><input id="txtDiscount" name="discount" type="number" min='0' max={this.state.subTotal} value={this.state.discount} onChange={this.handleChangeDiscount} /><br></br></div>
+                               { payStatus ? 
+                                <div>
+                                   <div className="col-sm-6"><b>Discount: $ </b><input disabled id="txtDiscount" name="discount" type="number" min='0' max={this.state.subTotal} value={this.state.discount} /><br></br></div>
+                                </div> :
+                                <div>
+                                  <div className="col-sm-6"><b>Discount: $ </b><input id="txtDiscount" name="discount" type="number" min='0' max={this.state.subTotal} value={this.state.discount} onChange={this.handleChangeDiscount} /><br></br></div>
+                                </div>
+
+                              }  
+
+                        
                                  {/*<div className="col-sm-6"><b>Discount: $ </b>{!Array.isArray(this.props.booking.Discount) ? this.props.booking.Discount : this.props.booking.Discount[0]}<br></br></div>*/}
                             </div>
                             <hr></hr>
                             <div className="row">
                                 <div className="col-sm-6"><b>Net Booking Charges   $</b>{this.state.netBookingCharges}<br></br></div>
-                                <div className="col-sm-6"><b>Other Goods: $ </b><input id="othrGoods" name="others" type="number" min="0" onChange={this.handleChange} /><br></br></div>
+                                { payStatus ?
+                                    <div>
+                                     <div className="col-sm-6"><b>Other Goods: $ </b><input disabled id="othrGoods" name="others" type="number" min="0" /><br></br></div>
+                                    </div> :
+                                    <div>
+                                      <div className="col-sm-6"><b>Other Goods: $ </b><input id="othrGoods" name="others" type="number" min="0" onChange={this.handleChange} /><br></br></div>
+                                    </div>
+                                   } 
                             </div>
                             <hr></hr>
                             <div className="row">
@@ -620,20 +637,41 @@ export default class Payment extends React.Component {
                                 <div className="col-sm-6"><b>Total To Pay   $</b><input disabled id="txtTotal" style={{backgroundColor: "green", fontWeight:"bold",color:"white"}} name="total" type="text" value={!this.props.booking.TotalToPay ? this.state.totalToPay : this.props.booking.TotalToPay} /><br></br></div>
                             </div>
                             <hr></hr>
-                            <div className="row">
-                                <div className="col-sm-6"><b>Extras   </b>
-                                    <select onChange={this.dropdownSelected}>
-                                        {this.state.dropdown}
-                                    </select>
-                                </div>
+                               
+                                <div className="row">
+                                { payStatus ?
+                                    <div>
+                                        <div className="col-sm-6"><b>Extras   </b>
+                                            <select disabled onChange={this.dropdownSelected}>
+                                                {this.state.dropdown}
+                                            </select>
+                                        </div>
 
-                                <div className="col-sm-6">
-                                    {
-                                        this.state.selectedExtras.map((el) => {
-                                            return <p key={el.ServiceName}>{el.ServiceName} - ${el.Cost} <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true"></span></a></p>
-                                        })
-                                    }
-                                </div>
+                                        <div className="col-sm-6">
+                                            {
+                                                this.state.selectedExtras.map((el) => {
+                                                    return <p key={el.ServiceName}>{el.ServiceName} - ${el.Cost} <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true"></span></a></p>
+                                                })
+                                            }
+                                        </div>
+                                    </div> :
+
+                                    <div>
+                                        <div className="col-sm-6"><b>Extras   </b>
+                                            <select onChange={this.dropdownSelected}>
+                                                {this.state.dropdown}
+                                            </select>
+                                        </div>
+
+                                        <div className="col-sm-6">
+                                            {
+                                                this.state.selectedExtras.map((el) => {
+                                                    return <p key={el.ServiceName}>{el.ServiceName} - ${el.Cost} <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true"></span></a></p>
+                                                })
+                                            }
+                                        </div>
+                                    </div>
+                                }
                             </div>
                             <hr style={{border: "none", borderBottom: "1px solid black"}}></hr>
                             <div className="row">
