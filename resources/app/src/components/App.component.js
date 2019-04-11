@@ -78,7 +78,7 @@ export default class Main extends React.Component {
 			.query("SELECT top 1 * from dbo.Animals order by AnimalID desc")
 
         let extraServices = await pool.request()
-            .query("SELECT * FROM dbo.Services Where IsActive = 1 ORDER BY ID")
+            .query("SELECT * FROM dbo.Services ORDER BY ID")
 
          let adminSetting = await pool.request()
              .query("SELECT top 1 * FROM dbo.AdminSetting Where IsActive = 1")

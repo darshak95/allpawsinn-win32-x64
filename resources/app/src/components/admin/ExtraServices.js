@@ -26,21 +26,34 @@ export default class ExtraServices extends React.Component {
         let serviceName = extraService.ServiceName;
         let cost = parseFloat(extraService.Cost);
 
-        let queryString = `
+        let queryString1 = `
         Insert into Services
         (ServiceName, IsActive,Cost) Values ('${serviceName}',1,'${cost}')`
 
-        let result = await pool.request()
-            .query(queryString)
+        let result1 = await pool.request()
+            .query(queryString1)
+
+
+         let queryString2 = `
+        SELECT * from dbo.Services`;
+
+        let result2 = await pool.request()
+            .query(queryString2)
+
+        this.setState({
+            extraServiceList : result2.recordset
+        })      
 
         sql.close()
+
+
     }
 
     handleAddService(event) {
         event.preventDefault()
         this.addQuery(this.state.extraService)
-        this.state.extraServiceList.push(this.state.extraService);
-        this.props.updateScreen("extra_services");
+        //this.state.extraServiceList.push(this.state.extraService);
+        
 
     }
 
@@ -52,22 +65,33 @@ export default class ExtraServices extends React.Component {
             extraService: dummy
         })
     }
-    handleDeleteService(event, id) {
-        this.deleteServiceQuery(id);
-        this.state.extraServiceList.pop(this.state.extraService);
-        this.props.updateScreen("extra_services");
+    handleDeleteService(event, serviceName, cost) {
+        this.deleteServiceQuery(serviceName,cost);
+        /*this.state.extraServiceList.shift(this.state.extraService);
+        this.props.updateScreen("extra_services");*/
     }
 
-    async deleteServiceQuery(id) {
+    async deleteServiceQuery(serviceName,cost) {
         let pool = await sql.connect(sqlConfig)
 
-        let qr = `UPDATE dbo.Services SET
-		dbo.Services.IsActive = 0
-		WHERE dbo.Services.ID = '${id}'`
+        let qr1 = `DELETE FROM dbo.Services 
+		WHERE dbo.Services.ServiceName = '${serviceName}' AND dbo.Services.Cost = '${cost}'`;
 
 
-        let result = await pool.request()
-            .query(qr);
+        let result1 = await pool.request()
+            .query(qr1)
+
+        let qr2 = `
+        SELECT * from dbo.Services`;
+
+        let result2 = await pool.request()
+            .query(qr2)
+
+        this.setState({
+            extraServiceList : result2.recordset
+        })    
+
+
         sql.close()
     }
 
@@ -83,6 +107,7 @@ export default class ExtraServices extends React.Component {
     }
 
     render() {
+     
         return (
             <div>
                 <div className="box cal" id="admin">
@@ -110,9 +135,6 @@ export default class ExtraServices extends React.Component {
                             <thead>
                                 <tr>
                                     <th>
-                                        #
-                        </th>
-                                    <th>
                                         Service Name
                         </th>
                                     <th>
@@ -129,11 +151,10 @@ export default class ExtraServices extends React.Component {
                                     this.state.extraServiceList.map((el, index) => {
                                         return (
                                             <tr key={index}>
-                                                <td>{el.ID}</td>
                                                 <td>{el.ServiceName}</td>
                                                 <td>{el.Cost}</td>
                                                 <td>
-                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true" style={{cursor:'pointer'}}></span></a>
+                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ServiceName, el.Cost)}><span className="glyphicon glyphicon-trash" aria-hidden="true" style={{cursor:'pointer'}}></span></a>
                                                     
                                                 </td>
                                             </tr>
