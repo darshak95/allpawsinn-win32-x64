@@ -16,7 +16,7 @@ export default class Admin extends React.Component {
                 Tax: "",
                 Discount: ""
             },
-            adminSettingList: null
+            adminSettingList: this.props.adminSettingTable
         }
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -24,9 +24,9 @@ export default class Admin extends React.Component {
         this.handleDeleteService = this.handleDeleteService.bind(this);
     }
 
-    componentDidMount() {
+    /*componentDidMount() {
         this.getAdminSettings()
-    }
+    }*/
 
     async handleQuery(adminSetting) {
         let pool = await sql.connect(sqlConfig);
@@ -44,7 +44,17 @@ export default class Admin extends React.Component {
         let result = await pool.request()
             .query(queryString)
 
+         let queryString2 = `SELECT * FROM dbo.AdminSetting`;
+
+        let result2 = await pool.request()
+            .query(queryString2)    
+
         sql.close()
+
+
+        this.setState({
+            adminSettingList: result2.recordset
+        })
     }
 
     async getAdminSettings() {
@@ -102,15 +112,14 @@ export default class Admin extends React.Component {
 
 
         let result = await pool.request()
-            .
-            query(qr);
+            .query(qr);
         sql.close()
     }
 
     handleDeleteService(event, id) {
         this.deleteServiceQuery(id);
-        this.state.adminSettingList.pop(this.state.adminSetting);
-        this.props.updateScreen("admin");
+        /*this.state.adminSettingList.pop(this.state.adminSetting);
+        this.props.updateScreen("admin");*/
     }
 
      async deleteServiceQuery(id) {
@@ -129,10 +138,11 @@ export default class Admin extends React.Component {
     }
 
     render() {
+        console.log(this.state.adminSettingList);
         return (
             <div>
                 <div className="box cal" id="admin">
-
+        
                     <h3>Admin</h3><br></br>
                     <div>
                         <form>
@@ -163,9 +173,7 @@ export default class Admin extends React.Component {
                         <table id="tblAdminList" className="table table-hover tableAdmin">
                             <thead>
                                 <tr>
-                                    <th>
-                                        #
-                        </th>
+                                
                                     <th>
                                         Day Care Rate($)
                         </th>
@@ -190,18 +198,17 @@ export default class Admin extends React.Component {
                             <tbody>
                                 {
                                     this.state.adminSettingList &&
-                                    this.state.adminSettingList[0].map((el, index) => {
+                                    this.state.adminSettingList.map((el, index) => {
                                         return (
                                             <tr key={index}>
-                                                <td>{el.ID}</td>
                                                 <td>{el.DayCareRate}</td>
                                                 <td>{el.BookingRate}</td>
                                                 <td>{el.Tax}</td>
                                                 <td>{el.Discount}</td>
                                                 <td>
                                                     {(el.IsActive == 1) ?
-                                                        <input type="radio" name="rdbAdminSetting" value="" onChange={(e) => this.handleRowSlection(e, el.ID)} checked />
-                                                        : <input type="radio" name="rdbAdminSetting" value="" onChange={(e) => this.handleRowSlection(e, el.ID)} />
+                                                        <input type="radio" value='' name="rdbAdminSetting" onChange={(e) => this.handleRowSlection(e, el.ID)} checked />
+                                                        : <input type="radio" value='' name="rdbAdminSetting" onChange={(e) => this.handleRowSlection(e, el.ID)} />
                                                     }
                                                 </td>
                                                 <td>

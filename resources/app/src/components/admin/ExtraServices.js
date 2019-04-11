@@ -40,11 +40,12 @@ export default class ExtraServices extends React.Component {
         let result2 = await pool.request()
             .query(queryString2)
 
+
+        sql.close()    
+
         this.setState({
             extraServiceList : result2.recordset
         })      
-
-        sql.close()
 
 
     }

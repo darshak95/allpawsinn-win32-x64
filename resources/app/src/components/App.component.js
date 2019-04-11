@@ -23,6 +23,7 @@ export default class Main extends React.Component {
 			kennel_map: [],
             bozun_objesi: {},
             extraService_List: [],
+            adminSetting_List: [],
             adminSetting:{},
             paid:0
            
@@ -78,10 +79,13 @@ export default class Main extends React.Component {
 			.query("SELECT top 1 * from dbo.Animals order by AnimalID desc")
 
         let extraServices = await pool.request()
-            .query("SELECT * FROM dbo.Services ORDER BY ID")
+            .query("SELECT * FROM dbo.Services")
 
          let adminSetting = await pool.request()
              .query("SELECT top 1 * FROM dbo.AdminSetting Where IsActive = 1")
+
+         let adminSettingTable = await pool.request()
+              .query("SELECT * FROM dbo.AdminSetting");    
 
 		let kennel_map = await pool.request()
 			.query("SELECT * FROM dbo.KennelOccupancy ORDER BY ID;")
@@ -102,6 +106,7 @@ export default class Main extends React.Component {
 			kennel_map : kennel_map.recordset,
             booking_list: bookings.recordset,
             extraService_List : extraServices.recordset,
+            adminSetting_List : adminSettingTable.recordset,
             adminSetting : {
 				DayCareRate : adminSetting.recordset[0].DayCareRate,
 				BookingRate : adminSetting.recordset[0].BookingRate,
@@ -267,7 +272,7 @@ export default class Main extends React.Component {
 			<div style={{backgroundColor: "#D3D3D3"}}>
 				<Navbar updateScreen = {this.updateScreen} side = {this.toggle_side} dogs = {this.state.dog_list}/>
                 <div className='wrapper'>
-                    <Screen new_dog={this.new_dog} kennel_map={this.state.kennel_map} print={this.get_print} boz={this.state.bozun_objesi} updateScreen={this.updateScreen} payment={this.get_payment} booking={this.state.payBooking} id_object={this.state.id_object} animal={this.state.animal} screen={this.state.screen} dogs={this.state.dog_list} bookings={this.state.booking_list} extraServices={this.state.extraService_List} currentId={this.state.booking} adminSetting = {this.state.adminSetting}/>
+                    <Screen new_dog={this.new_dog} kennel_map={this.state.kennel_map} print={this.get_print} boz={this.state.bozun_objesi} updateScreen={this.updateScreen} payment={this.get_payment} booking={this.state.payBooking} id_object={this.state.id_object} animal={this.state.animal} screen={this.state.screen} dogs={this.state.dog_list} bookings={this.state.booking_list} extraServices={this.state.extraService_List} adminSettingTable={this.state.adminSetting_List} currentId={this.state.booking} adminSetting = {this.state.adminSetting}/>
 					<Sidescreen alerts = {this.state.alerts} notifications = {this.state.notifications} push_notif = {this.push_notif} push_alert = {this.push_alert} daycare = {this.get_daycare} client = {this.get_client} profile = {this.full_profile} proc = {this.grab_animal} dogs = {this.state.dog_list} query = {this.state.query} side = {this.toggle_side_off} sidescreen = {this.state.sidescreen}/>
 				</div>
 			</div>

@@ -54,7 +54,7 @@ export default class Screen extends React.Component {
 		else if(this.state.screen === "help")
             return <Help />
         else if (this.state.screen === "admin")
-            return <Admin updateScreen={this.props.updateScreen} adminSetting={this.props.adminSetting} />
+            return <Admin updateScreen={this.props.updateScreen} adminSetting={this.props.adminSetting} adminSettingTable = {this.props.adminSettingTable} />
         else if (this.state.screen === "extra_services")
             return <ExtraServices updateScreen={this.props.updateScreen} extraServices={this.props.extraServices} />
 		else
