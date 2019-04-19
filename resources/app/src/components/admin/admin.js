@@ -16,7 +16,8 @@ export default class Admin extends React.Component {
                 Tax: "",
                 Discount: ""
             },
-            adminSettingList: this.props.adminSettingTable
+            adminSettingList: this.props.adminSettingTable,
+            buttonValue: true
         }
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -82,8 +83,8 @@ export default class Admin extends React.Component {
         //this.props.adminSetting.Discount = event.currentTarget.form[3].value;
 
         this.handleQuery(this.state.adminSetting)
-        this.state.adminSettingList.push(this.state.adminSetting);
-        this.props.updateScreen("admin");
+        //this.state.adminSettingList.push(this.state.adminSetting);
+        //this.props.updateScreen("admin");
 
     }
 
@@ -95,11 +96,11 @@ export default class Admin extends React.Component {
             adminSetting: dummy
         })
     }
-    handleRowSlection(event, id) {
-        this.updateRowSelection(id);
+    handleRowSlection(event,dayCareRate,bookingRate,tax,discount) {
+        this.updateRowSelection(dayCareRate,bookingRate,tax,discount);
     }
 
-    async updateRowSelection(id) {
+    async updateRowSelection(dayCareRate,bookingRate,tax,discount) {
         let pool = await sql.connect(sqlConfig)
 
         let qr = `UPDATE dbo.AdminSetting SET
@@ -107,26 +108,36 @@ export default class Admin extends React.Component {
         
         UPDATE dbo.AdminSetting SET 
 		dbo.AdminSetting.IsActive = 1 
-		WHERE dbo.AdminSetting.ID = '${id}'`
-
-
+		WHERE dbo.AdminSetting.DayCareRate = '${dayCareRate}' AND dbo.AdminSetting.BookingRate='${bookingRate}' AND dbo.AdminSetting.Tax='${tax}' AND dbo.AdminSetting.Discount='${discount}'`;
 
         let result = await pool.request()
             .query(qr);
+
+
+
+        let qr2 = `SELECT * FROM dbo.AdminSetting`
+         
+        let result2 = await pool.request()
+            .query(qr2); 
+
         sql.close()
+
+        this.setState({
+                adminSettingList : result2.recordset
+            }) 
     }
 
-    handleDeleteService(event, id) {
-        this.deleteServiceQuery(id);
+    handleDeleteService(event, dayCareRate,bookingRate,tax,discount) {
+        this.deleteServiceQuery(dayCareRate,bookingRate,tax,discount);
         /*this.state.adminSettingList.pop(this.state.adminSetting);
         this.props.updateScreen("admin");*/
     }
 
-     async deleteServiceQuery(id) {
+     async deleteServiceQuery(dayCareRate,bookingRate,tax,discount) {
         let pool = await sql.connect(sqlConfig)
 
         let qr = `DELETE from dbo.AdminSetting
-        WHERE dbo.AdminSetting.ID = '${id}'
+        WHERE dbo.AdminSetting.DayCareRate = '${dayCareRate}' AND dbo.AdminSetting.BookingRate='${bookingRate}' AND dbo.AdminSetting.Tax='${tax}' AND dbo.AdminSetting.Discount='${discount}'
 
         UPDATE dbo.AdminSetting SET 
         dbo.AdminSetting.IsActive = 1 
@@ -134,11 +145,19 @@ export default class Admin extends React.Component {
 
         let result = await pool.request()
             .query(qr);
+
+        let qr2 = `SELECT * FROM dbo.AdminSetting`
+        
+        let result2 = await pool.request()
+            .query(qr2);    
         sql.close();
+
+        this.setState({
+                adminSettingList : result2.recordset
+        }) 
     }
 
     render() {
-        console.log(this.state.adminSettingList);
         return (
             <div>
                 <div className="box cal" id="admin">
@@ -207,12 +226,12 @@ export default class Admin extends React.Component {
                                                 <td>{el.Discount}</td>
                                                 <td>
                                                     {(el.IsActive == 1) ?
-                                                        <input type="radio" value='' name="rdbAdminSetting" onChange={(e) => this.handleRowSlection(e, el.ID)} checked />
-                                                        : <input type="radio" value='' name="rdbAdminSetting" onChange={(e) => this.handleRowSlection(e, el.ID)} />
+                                                        <input type="radio" value = {true} name="rdbAdminSetting" onChange={(e) => this.handleRowSlection(e, el.DayCareRate,el.BookingRate,el.Tax,el.Discount)} checked={this.state.buttonValue===true} />
+                                                        : <input type="radio" value = {false} name="rdbAdminSetting" onChange={(e) => this.handleRowSlection(e, el.DayCareRate,el.BookingRate,el.Tax,el.Discount)} checked={this.state.buttonValue===false} />
                                                     }
                                                 </td>
                                                 <td>
-                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e, el.ID)}><span className="glyphicon glyphicon-trash" aria-hidden="true" style={{cursor:'pointer'}}></span></a>
+                                                    <a title="delete" onClick={(e) => this.handleDeleteService(e,el.DayCareRate,el.BookingRate,el.Tax,el.Discount)}><span className="glyphicon glyphicon-trash" aria-hidden="true" style={{cursor:'pointer'}}></span></a>
                                                     
                                                 </td>
                                             </tr>

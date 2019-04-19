@@ -61,6 +61,7 @@ export default class Main extends React.Component {
 
 		// catch errors in this block
 		// fill out empty id's before pushing the sql
+		sql.close();
 		let pool = await sql.connect(sqlConfig)
 		let result = await pool.request()
 			.query("SELECT * from dbo.Animals, dbo.VetDetails, dbo.ClientDetails where dbo.Animals.ClientID = dbo.ClientDetails.ClientID and dbo.ClientDetails.VetSurgeryId = dbo.VetDetails.ID")
@@ -70,13 +71,13 @@ export default class Main extends React.Component {
 			.query("SELECT * from dbo.BookingObjects ,dbo.VetDetails, dbo.Animals, dbo.ClientDetails where dbo.Animals.ClientID = dbo.ClientDetails.ClientID and dbo.Animals.AnimalID =  dbo.BookingObjects.AnimalID and dbo.ClientDetails.VetSurgeryId = dbo.VetDetails.ID and dbo.BookingObjects.DateOut > '2017-07-06 12:00:00.000'")
 		//if err sql.close
 		let num = await pool.request()
-			.query("SELECT top 1 * from dbo.BookingObjects order by BookingID desc")
+			.query("SELECT  * from dbo.BookingObjects order by BookingID desc")
 
 		let client = await pool.request()
-			.query("SELECT top 1 * from dbo.ClientDetails order by ClientID desc")
+			.query("SELECT  * from dbo.ClientDetails order by ClientID desc")
 
 		let animal = await pool.request()
-			.query("SELECT top 1 * from dbo.Animals order by AnimalID desc")
+			.query("SELECT  * from dbo.Animals order by AnimalID desc")
 
         let extraServices = await pool.request()
             .query("SELECT * FROM dbo.Services")
@@ -133,8 +134,11 @@ export default class Main extends React.Component {
 	}
 
 	updateScreen(new_screen){
+		console.log("Inside updateScreen");
+		this.grabDogs();
+		console.log("Running grabdogs again");
 		this.setState({
-			screen : new_screen
+			screen: new_screen
 		})
 	}
 
@@ -268,6 +272,7 @@ export default class Main extends React.Component {
 	render(){
 		//order props neatly
 		//pay booking && booking is passed as undefined
+		console.log('screen',this.state.screen);
 		return(
 			<div style={{backgroundColor: "#D3D3D3"}}>
 				<Navbar updateScreen = {this.updateScreen} side = {this.toggle_side} dogs = {this.state.dog_list}/>

@@ -75,7 +75,7 @@ async function newClient(client, vetId) {
     let pool = await sql.connect(sqlConfig)
     // console.log(client)
     let qr = `INSERT INTO ClientDetails (FirstName,LastName,Address1,Email,PostcodeZIP,TelHome,TelWork,VetSurgeryId,Town)
-	VALUES ('${client.FirstName}','${client.LastName}','${client.Adress}','${client.Email}','${client.Zip}','${client.Contact_home}','${client.Contact_work}','${vetId}','${client.Town}')`
+    VALUES ('${client.FirstName}','${client.LastName}','${client.Adress}','${client.Email}','${client.Zip}','${client.Contact_home}','${client.Contact_work}','${vetId}','${client.Town}')`
     //if err s
     await pool.request().query(qr)
     sql.close()
@@ -90,7 +90,7 @@ async function newAnimal(animal, clientID) {
     let pool = await sql.connect(sqlConfig)
     console.log(animal)
     let qr = `INSERT INTO Animals (ClientID,TypeID,AnimalName,Breed,Sex,Food1TypeName,Food1Freq,Food1Amount,MedicalConditions,Age)
-	VALUES ('${clientID}','2','${animal.AnimalName}','${animal.AnimalBreed}','${animal.AnimalSex}','${animal.FoodType}','${animal.FoodFreq}','${animal.FoodAmount}','${animal.MedicalDetails}','${animal.Age}')`
+    VALUES ('${clientID}','2','${animal.AnimalName}','${animal.AnimalBreed}','${animal.AnimalSex}','${animal.FoodType}','${animal.FoodFreq}','${animal.FoodAmount}','${animal.MedicalDetails}','${animal.Age}')`
     //if err s
     await pool.request().query(qr)
     sql.close()
@@ -103,7 +103,7 @@ async function newVet(vet) {
 
     let pool = await sql.connect(sqlConfig)
     let qr = `INSERT INTO VetDetails (PracticeName,VetName,ContactNo,Address1,Town,Email)
-	VALUES ('${vet.Practice_name}','${vet.Vet_name}','${vet.Contact}', '${vet.Address}','${vet.Town}', '${vet.Email}')`
+    VALUES ('${vet.Practice_name}','${vet.Vet_name}','${vet.Contact}', '${vet.Address}','${vet.Town}', '${vet.Email}')`
     //if err s
     await pool.request().query(qr).then(result => {
 
@@ -189,6 +189,7 @@ export default class NewBooking extends React.Component {
                 fillRequired: true
             })
         } else {
+            console.log("inside else");
             newVet(vet_details).then(result => {
                 getVet(vet_details).then(VetObject => {
                     tempVet = VetObject
@@ -201,6 +202,7 @@ export default class NewBooking extends React.Component {
                                     tempAnimal = animalObj;
                                     merged = Object.assign({}, tempClient, tempAnimal);
                                     this.props.dogs.push(merged)
+                                    this.props.updateScreen("home");
                                 })
                             })
                         })
@@ -208,15 +210,9 @@ export default class NewBooking extends React.Component {
                 })
             })
 
-            this.props.updateScreen("home")
-
-
-
-
         }
 
-
-
+        
     }
 
     render() {
@@ -335,7 +331,7 @@ export default class NewBooking extends React.Component {
                     }
 
                     <div id="submitInput">
-                        <input className="profileButton" type="Submit" value="Submit" />
+                        <input className="profileButton" type="Submit" defaultValue="Submit" />
                     </div>
 
 
