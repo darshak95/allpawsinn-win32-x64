@@ -97,6 +97,7 @@ export default class Grid extends React.Component {
         this.getMonthIndex = this.getMonthIndex.bind(this)
         this.dateCompare = this.dateCompare.bind(this)
         this.getDayIndex = this.getDayIndex.bind(this)
+        this.compareValues = this.compareValues.bind(this)
     }
 
     async removeBooking(bookingObject) {
@@ -391,7 +392,6 @@ export default class Grid extends React.Component {
         //     booking.Status = "NCI";
         // }
         if(booking.TodayDate) {
-        console.log("COMPARE", this.dateCompare(todayDate, booking.TodayDate));
         if (this.dateCompare(todayDate, booking.TodayDate)) {
             booking.Status = "NCI";
             //booking.Days = booking.Days + this.getDayIndex(todayDate.substring(0,3));        
@@ -840,9 +840,7 @@ export default class Grid extends React.Component {
                 }
             ];   
 
-          }  
-
-          
+           }
 
          }  
         if (column.key === 'print') {
@@ -907,13 +905,34 @@ export default class Grid extends React.Component {
     deleteRows(bookingId) {
         let rows = this._rows.map(el => el.booking).slice()
         this._rows = rows.filter(row => row.BookingID !== bookingId)
-        
     }
+
+    compareValues(key) {
+            return function(a, b) {
+            if(!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+              // property doesn't exist on either object
+              return 0;
+            }
+
+            const varA = a[key];
+            const varB = b[key];
+
+            let comparison = 0;
+            if (varA > varB) {
+              comparison = 1;
+            } else if (varA < varB) {
+              comparison = -1;
+            }
+            return (comparison * -1)
+            
+          };
+        }
+
 
     render() {
         this.emptyRows()
         const rowText = this.state.selectedIndexes.length === 1 ? 'row' : 'rows';
-        let curList = this.props.current;
+        let curList = (this.props.current).sort(this.compareValues('BookingID'));
         // TODO: Add first-to-last & last-to-first switch
         return (
             <div>
