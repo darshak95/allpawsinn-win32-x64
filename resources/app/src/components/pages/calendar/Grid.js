@@ -69,7 +69,7 @@ export default class Grid extends React.Component {
         this._columns = [
             { key: 'client', name: 'Client', resizable: 'true', width:100 },
             { key: 'dog', name: 'Dog', resizable: 'true', width:60 },
-            { key: 'm', name: 'Monday', width:70 },
+            { key: 'm', name: 'Monday', width:70},
             { key: 't', name: 'Tuesday', width:70 },
             { key: 'w', name: 'Wednesday', width:80 },
             { key: 'r', name: 'Thursday', width:80 },
@@ -170,10 +170,16 @@ export default class Grid extends React.Component {
               let result2 = await pool.request()
                    .query(queryString2);
 
+              let queryString8 = `INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices,DayCareRate,SubTotal,Discount,NetBookingCharges) Values (${bookingId},0,0,0,0,0,0,0,0)`;
+              let result8 = await pool.request()
+                   .query(queryString8);     
+
               let queryString3 = `SELECT dbo.ClientDetails.AccountBalance FROM dbo.ClientDetails WHERE dbo.ClientDetails.ClientID=${bookingObject.ClientID[0]}`;
               
               let result3 = await pool.request()
                    .query(queryString3);
+
+
 
               
              
@@ -393,8 +399,10 @@ export default class Grid extends React.Component {
         // }
         if(booking.TodayDate) {
         if (this.dateCompare(todayDate, booking.TodayDate)) {
-            booking.Status = "NCI";
+            if(this.props.week === 0) {
+                booking.Status = "NCI";
             //booking.Days = booking.Days + this.getDayIndex(todayDate.substring(0,3));        
+            }
         }
     }
         let day = (booking.Days)
@@ -456,350 +464,353 @@ export default class Grid extends React.Component {
     }
 
     onCellSelected(rowIdx, idx) {
-        let date = new Date(Date.now())
-        let day = date.toString().substring(0, 3)
-        let dayNo = 1;
-        switch (day) {
-            case 'Mon':
-                dayNo = 1
-                break;
-            case 'Tue':
-                dayNo = 2
-                break;
-            case 'Wed':
-                dayNo = 3
-                break;
-            case 'Thu':
-                dayNo = 4
-                break;
-            case 'Fri':
-                dayNo = 5
-                break;
-            case 'Sat':
-                dayNo = 6
-                break;
-            case 'Sun':
-                dayNo = 7
-                break;
-        }
-        if (rowIdx.idx >= 2 && rowIdx.idx <= 7) {
-            if (this._rows[rowIdx.rowIdx].booking.Status == "CO") {
-                alert("Changes can't be made as the customer has checked out");
-                return;
+
+        if(this.props.week === 0) {
+            let date = new Date(Date.now())
+            let day = date.toString().substring(0, 3)
+            let dayNo = 1;
+            switch (day) {
+                case 'Mon':
+                    dayNo = 1
+                    break;
+                case 'Tue':
+                    dayNo = 2
+                    break;
+                case 'Wed':
+                    dayNo = 3
+                    break;
+                case 'Thu':
+                    dayNo = 4
+                    break;
+                case 'Fri':
+                    dayNo = 5
+                    break;
+                case 'Sat':
+                    dayNo = 6
+                    break;
+                case 'Sun':
+                    dayNo = 7
+                    break;
             }
+            if (rowIdx.idx >= 2 && rowIdx.idx <= 7) {
+                if (this._rows[rowIdx.rowIdx].booking.Status == "CO" && rowIdx.idx <= dayNo+1) {
+                    alert("Changes can't be made as the customer has checked out");
+                    return;
+                }
 
-            switch (rowIdx.idx) {
-                case 2:
-                    if (dayNo <= 1) {
-                        if (this._rows[rowIdx.rowIdx].m !== 'X') {
-                            this._rows[rowIdx.rowIdx].m = 'X';
-                            this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                            
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                            }
-                            else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                            }
-                            this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'm'
-
-                            let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                            let discoRate = this.props.adminSetting.Discount;
-                            let afterDiscount = total - discoRate;
-                            let taxRate = this.props.adminSetting.Tax;
-
-                            let tax = ((afterDiscount * taxRate) / 100)
-                            
-                            let amount = afterDiscount + tax
-
-                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                        }
-                        else {
-                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===1) {
-                                alert("You can't make changes now!");
-                                return;
-                            }
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
-                                this._rows[rowIdx.rowIdx].m = ''
-                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                switch (rowIdx.idx) {
+                    case 2:
+                        if (dayNo <= 1) {
+                            if (this._rows[rowIdx.rowIdx].m !== 'X') {
+                                this._rows[rowIdx.rowIdx].m = 'X';
+                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
                                 if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
                                 }
                                 else {
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                                 }
-                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('m', '');
-
-                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                            }
-                        }
-                    }
-                    break;
-                case 3:
-                    if (dayNo <= 2) {
-                        if (this._rows[rowIdx.rowIdx].t !== 'X') {
-                            this._rows[rowIdx.rowIdx].t = 'X'
-                            this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                            }
-                            else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                            }
-                            this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 't'
-                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                        }
-                        else {
-                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===2) {
-                                alert("You can't make changes now!");
-                                return;
-                            }
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
-                                this._rows[rowIdx.rowIdx].t = ''
-                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
-                                if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; // 21.99
-                                }
-                                else {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                                }
-                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('t', '');
-                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                            }
-                        }
-                    }
-                    break;
-                case 4:
-                    if (dayNo <= 3) {
-                        if (this._rows[rowIdx.rowIdx].w !== 'X') {
-                            this._rows[rowIdx.rowIdx].w = 'X'
-                            this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                            }
-                            else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                            }
-                            this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'w'
-                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                        }
-                        else {
-                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===3) {
-                                alert("You can't make changes now!");
-                                return;
-                            }
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
-                                this._rows[rowIdx.rowIdx].w = ''
-                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
-                                if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                                }
-                                else {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                                }
-                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('w', '');
-
-                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                            }
-                        }
-                    }
-                    break;
-                case 5:
-                    if (dayNo <= 4) {
-                        if (this._rows[rowIdx.rowIdx].r !== 'X') {
-                            this._rows[rowIdx.rowIdx].r = 'X'
-                            this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                            }
-                            else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                            }
-                            this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'r'
-                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                        }
-                        else {
-                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===4) {
-                                alert("You can't make changes now!");
-                                return;
-                            }
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
-                                this._rows[rowIdx.rowIdx].r = ''
-                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
-                                if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                                }
-                                else {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                                }
-                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('r', '');
+                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'm'
 
                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100);
-                            
-                                let amount = afterDiscount + tax;
-                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                            }
-                        }
-                    }
-                    break;
-                case 6:
-                    if (dayNo <= 5) {
-                        if (this._rows[rowIdx.rowIdx].f !== 'X') {
-                            this._rows[rowIdx.rowIdx].f = 'X'
-                            this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
-                            }
-                            else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
-                            }
-                            this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'f'
-                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
+                                let discoRate = this.props.adminSetting.Discount;
+                                let afterDiscount = total - discoRate;
+                                let taxRate = this.props.adminSetting.Tax;
 
                                 let tax = ((afterDiscount * taxRate) / 100)
-                            
+                                
                                 let amount = afterDiscount + tax
-                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                        }
-                        else {
-                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===5) {
-                                alert("You can't make changes now!");
-                                return;
+
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
-                                this._rows[rowIdx.rowIdx].f = ''
-                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                            else {
+                                if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===1) {
+                                    alert("You can't make changes now!");
+                                    return;
+                                }
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
+                                    this._rows[rowIdx.rowIdx].m = ''
+                                    this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                                    if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                    }
+                                    else {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                    }
+                                    this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('m', '');
+
+                                     let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                    this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                                }
+                            }
+                        }
+                        break;
+                    case 3:
+                        if (dayNo <= 2) {
+                            if (this._rows[rowIdx.rowIdx].t !== 'X') {
+                                this._rows[rowIdx.rowIdx].t = 'X'
+                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
                                 if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
                                 }
                                 else {
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
                                 }
-                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('f', '');
+                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 't'
+                                     let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
 
-                                let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
-
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
+                            else {
+                                if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===2) {
+                                    alert("You can't make changes now!");
+                                    return;
+                                }
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
+                                    this._rows[rowIdx.rowIdx].t = ''
+                                    this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                                    if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; // 21.99
+                                    }
+                                    else {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                    }
+                                    this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('t', '');
+                                     let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                    this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                                }
+                            }
                         }
-                    }
-                    break;
-                case 7:
-                    if (dayNo <= 6) {
-                        if (this._rows[rowIdx.rowIdx].s !== 'X') {
-                            this._rows[rowIdx.rowIdx].s = 'X'
-                            this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                        break;
+                    case 4:
+                        if (dayNo <= 3) {
+                            if (this._rows[rowIdx.rowIdx].w !== 'X') {
+                                this._rows[rowIdx.rowIdx].w = 'X'
+                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                }
+                                else {
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                }
+                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'w'
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
                             else {
-                                this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
-                            }
-                            this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 's'
-                             let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
+                                if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===3) {
+                                    alert("You can't make changes now!");
+                                    return;
+                                }
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
+                                    this._rows[rowIdx.rowIdx].w = ''
+                                    this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                                    if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                    }
+                                    else {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                    }
+                                    this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('w', '');
 
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
-                            this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
-                        }
-                        else {
-                            if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo === 6) {
-                                alert("You can't make changes now!");
-                                return;
+                                     let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                    this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                                }
                             }
-                            if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
-                                this._rows[rowIdx.rowIdx].s = ''
-                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                        }
+                        break;
+                    case 5:
+                        if (dayNo <= 4) {
+                            if (this._rows[rowIdx.rowIdx].r !== 'X') {
+                                this._rows[rowIdx.rowIdx].r = 'X'
+                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
                                 if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
-                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                }
+                                else {
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                }
+                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'r'
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                            }
+                            else {
+                                if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===4) {
+                                    alert("You can't make changes now!");
+                                    return;
+                                }
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
+                                    this._rows[rowIdx.rowIdx].r = ''
+                                    this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                                    if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                    }
+                                    else {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                    }
+                                    this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('r', '');
+
+                                    let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100);
+                                
+                                    let amount = afterDiscount + tax;
+                                    this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                                }
+                            }
+                        }
+                        break;
+                    case 6:
+                        if (dayNo <= 5) {
+                            if (this._rows[rowIdx.rowIdx].f !== 'X') {
+                                this._rows[rowIdx.rowIdx].f = 'X'
+                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                }
+                                else {
+                                    this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                }
+                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 'f'
+                                 let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                            }
+                            else {
+                                if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo===5) {
+                                    alert("You can't make changes now!");
+                                    return;
+                                }
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
+                                    this._rows[rowIdx.rowIdx].f = ''
+                                    this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                                    if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //21.99
+                                    }
+                                    else {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; //17.99
+                                    }
+                                    this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('f', '');
+
+                                    let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                    this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                                }
+                            }
+                        }
+                        break;
+                    case 7:
+                        if (dayNo <= 6) {
+                            if (this._rows[rowIdx.rowIdx].s !== 'X') {
+                                this._rows[rowIdx.rowIdx].s = 'X'
+                                this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays + 1
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
                                 }
                                 else {
                                     this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
                                 }
-                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('s', '');
-
+                                this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days + 's'
                                  let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
-                                 let discoRate = this.props.adminSetting.Discount;
-                                 let afterDiscount = total - discoRate;
-                                 let taxRate = this.props.adminSetting.Tax;
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
 
-                                let tax = ((afterDiscount * taxRate) / 100)
-                            
-                                let amount = afterDiscount + tax
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
                                 this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
                             }
+                            else {
+                                if(this._rows[rowIdx.rowIdx].booking.Status == "CI" && dayNo === 6) {
+                                    alert("You can't make changes now!");
+                                    return;
+                                }
+                                if (this._rows[rowIdx.rowIdx].booking.NoDays !== 1) {
+                                    this._rows[rowIdx.rowIdx].s = ''
+                                    this._rows[rowIdx.rowIdx].booking.NoDays = this._rows[rowIdx.rowIdx].booking.NoDays - 1
+                                    if (this._rows[rowIdx.rowIdx].booking.NoDays <= 2) {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
+                                    }
+                                    else {
+                                        this._rows[rowIdx.rowIdx].booking.DayCareRate = this.props.adminSetting.DayCareRate; 
+                                    }
+                                    this._rows[rowIdx.rowIdx].booking.Days = this._rows[rowIdx.rowIdx].booking.Days.replace('s', '');
+
+                                     let total = this._rows[rowIdx.rowIdx].booking.NoDays * this._rows[rowIdx.rowIdx].booking.DayCareRate
+                                     let discoRate = this.props.adminSetting.Discount;
+                                     let afterDiscount = total - discoRate;
+                                     let taxRate = this.props.adminSetting.Tax;
+
+                                    let tax = ((afterDiscount * taxRate) / 100)
+                                
+                                    let amount = afterDiscount + tax
+                                    this._rows[rowIdx.rowIdx].amount = amount.toFixed(2)
+                                }
+                            }
                         }
-                    }
-                    break;
+                        break;
+                }
+                this.setRows();
+                updateBookingQuery(this._rows[rowIdx.rowIdx].booking);
+                this.Refresh();
             }
-            this.setRows();
-            updateBookingQuery(this._rows[rowIdx.rowIdx].booking);
-            this.Refresh();
         }
     };
 
@@ -823,13 +834,23 @@ export default class Grid extends React.Component {
         
         if (column.key === 'pay') {
             if(row.booking.AccountBalance  > 0) {
+                if(this.props.week > 0) {
             
               return [
+                {
+                    icon: 'glyphicon glyphicon-usd text-danger',
+                    callback: () => { this.getPayment(row.booking)}
+                }
+            ];
+          } else {
+
+            return [
                 {
                     icon: 'glyphicon glyphicon-usd',
                     callback: () => { this.getPayment(row.booking)}
                 }
             ];
+          }
           
           } else if(row.booking.AccountBalance === 0) {
               
@@ -852,30 +873,34 @@ export default class Grid extends React.Component {
             ];
         }
         if (column.key === 'remove' && row.booking.Status != "CO" && (!row.booking.AccountBalance)) {
-            return [
-                {
-                    icon: 'glyphicon glyphicon-trash',
-                    callback: () => { this.removeBooking(row.booking) }
-                }
-            ];
+            if(this.props.week === 0) {    
+                return [
+                    {
+                        icon: 'glyphicon glyphicon-trash',
+                        callback: () => { this.removeBooking(row.booking) }
+                    }
+                ];
+            }
         }
 
         if (column.key === 'action' && row.booking.Status != "CO") {
-            if(row.booking.Status === "NCI") {
-                return [
-                {
-                    icon: 'glyphicon glyphicon-minus',
-                    callback: () => { this.changeState(row.booking) }
+            if(this.props.week === 0) {
+                if(row.booking.Status === "NCI") {
+                    return [
+                    {
+                        icon: 'glyphicon glyphicon-minus',
+                        callback: () => { this.changeState(row.booking) }
+                    }
+                    ];
                 }
-            ];
-            }
-            else {
-                return [
-                {
-                    icon: 'glyphicon glyphicon-plus',
-                    callback: () => { this.changeState(row.booking) }
+                else {
+                    return [
+                    {
+                        icon: 'glyphicon glyphicon-plus',
+                        callback: () => { this.changeState(row.booking) }
+                    }
+                ];
                 }
-            ];
             }
         }
 
@@ -930,6 +955,7 @@ export default class Grid extends React.Component {
 
 
     render() {
+        console.log(this.props.week);
         this.emptyRows()
         const rowText = this.state.selectedIndexes.length === 1 ? 'row' : 'rows';
         let curList = (this.props.current).sort(this.compareValues('BookingID'));

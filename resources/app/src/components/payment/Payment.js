@@ -101,23 +101,20 @@ export default class Payment extends React.Component {
         let id = this.props.booking.KennelID
         let accBal = 0.00;
         let udpateAccBal = false;
-        let queryString1 = `Select * from dbo.Payments Where dbo.Payments.BookingID = ${bookingId}`;
+       /* let queryString1 = `Select * from dbo.Payments Where dbo.Payments.BookingID = ${bookingId}`;
         let result1 = await pool.request()
-            .query(queryString1)
+            .query(queryString1)*/
         
         
-        if(!result1.recordset[0]) {
-
+        /*if(!result1.recordset[0]) {
+*/
            let queryString4 = "Update dbo.KennelOccupancy SET Occupancy = 0 WHERE ID = " + id
             await pool.request()
             .query(queryString4)
 
         let queryString5 = `UPDATE BookingObjects SET Status = '${this.props.booking.Status}',TotalToPay=${this.state.totalToPay} WHERE dbo.BookingObjects.BookingID = ${bookingId}`
-        queryString5 += ` INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices
-        ,DayCareRate,SubTotal,Discount,NetBookingCharges) Values 
-        ('${bookingId}' ,${otherChargesPaid} ,${taxToPay} ,${totalToPay} , '${extraServices}', ${dayCareRate}, ${subTotal}
-        , ${discount}, ${netBookingCharges})`;
-        let result4 = await pool.request()
+        queryString5 += `Update Payments SET OtherChargesPaid=${otherChargesPaid},TaxPaid=${taxToPay},TotalChargesPaid=${totalToPay},ExtraServices='${extraServices}',DayCareRate=${dayCareRate},SubTotal=${subTotal},Discount=${discount},NetBookingCharges=${netBookingCharges} WHERE BookingID=${bookingId}`;
+        let result5 = await pool.request()
             .query(queryString5)
 
        /* let queryString6 = `Select AccountBalance from dbo.ClientDetails WHERE ClientID =` + this.props.booking.ClientID[0];
@@ -141,7 +138,7 @@ export default class Payment extends React.Component {
         console.log('FRESH UPDATE:', accBal);
         let result7 = await pool.request()
             .query(queryString7)*/
-    }
+   // }
 
       let queryString3 = `Update dbo.ClientDetails SET dbo.ClientDetails.AccountBalance=${accountBalance} WHERE dbo.ClientDetails.ClientID=${this.props.booking.ClientID[0]}`;
         let result3 = await pool.request()
@@ -546,7 +543,7 @@ export default class Payment extends React.Component {
                             </div>
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Net Booking Charges   $</b>{this.state.paymentFields.NetBookingCharges}<br></br></div>
+                                <div className="col-sm-6"><b>Charges After Discount:   $</b>{this.state.paymentFields.NetBookingCharges}<br></br></div>
                                 <div className="col-sm-6"><b>Other Goods: $ </b>{this.state.paymentFields.OtherChargersPaid}<br></br></div>
                             </div>
                             <hr></hr>
@@ -630,7 +627,7 @@ export default class Payment extends React.Component {
                             </div>
                             <hr></hr>
                             <div className="row">
-                                <div className="col-sm-6"><b>Net Booking Charges   $</b>{this.state.netBookingCharges}<br></br></div>
+                                <div className="col-sm-6"><b>Charges After Discount:   $</b>{this.state.netBookingCharges}<br></br></div>
                                 { payStatus ?
                                     <div>
                                      <div className="col-sm-6"><b>Other Goods: $ </b><input disabled id="othrGoods" name="others" type="number" min="0" /><br></br></div>

@@ -147,7 +147,7 @@ export default class Calendar extends React.Component {
 
 		if (this.state.calendar){
 			if (this.state.daycare){
-                panel = <Grid paid={this.props.paid} currentUpdate={this.currentUpdate} updateScreen={this.props.updateScreen} print={this.props.print} current={current} payment={this.props.payment} adminSetting={this.props.adminSetting}/>
+                panel = <Grid week ={this.state.week} paid={this.props.paid} currentUpdate={this.currentUpdate} updateScreen={this.props.updateScreen} print={this.props.print} current={current} payment={this.props.payment} adminSetting={this.props.adminSetting}/>
 			}
 			else
                 panel = <Layout kennel_map={this.props.kennel_map} bookings={bookings_list} current={current} range={range} adminSetting={this.props.adminSetting}/>
