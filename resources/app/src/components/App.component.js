@@ -67,7 +67,7 @@ export default class Main extends React.Component {
 
 		// catch errors in this block
 		// fill out empty id's before pushing the sql
-		sql.close();
+		
 		let pool = await sql.connect(sqlConfig)
 		let result = await pool.request()
 			.query("SELECT * from dbo.Animals, dbo.VetDetails, dbo.ClientDetails where dbo.Animals.ClientID = dbo.ClientDetails.ClientID and dbo.ClientDetails.VetSurgeryId = dbo.VetDetails.ID")
@@ -88,10 +88,10 @@ export default class Main extends React.Component {
         let extraServices = await pool.request()
             .query("SELECT * FROM dbo.Services")
 
-         let adminSetting = await pool.request()
+        let adminSetting = await pool.request()
              .query("SELECT top 1 * FROM dbo.AdminSetting Where IsActive = 1")
 
-         let adminSettingTable = await pool.request()
+        let adminSettingTable = await pool.request()
               .query("SELECT * FROM dbo.AdminSetting");    
 
 		let kennel_map = await pool.request()
@@ -140,9 +140,7 @@ export default class Main extends React.Component {
 	}
     
 	updateScreen(new_screen){
-		console.log("Inside updateScreen");
 		this.grabDogs();
-		console.log("Running grabdogs again");
 		this.setState({
 			screen: new_screen
 		})
@@ -272,45 +270,38 @@ export default class Main extends React.Component {
 		//booking_lib.create_booking(sqlArray, false)
 		if(!Number.isInteger(sqlArray.KennelID))
 			sqlArray.KennelID = sqlArray.KennelID*1
-		console.log("I'm inside insertDog");
-			let pool = await sql.connect(sqlConfig)
+		
+		let pool = await sql.connect(sqlConfig)
 
-			for(let i = 0; i < sqlArray.length; i++){
-				let new_booking = JSON.parse(JSON.stringify(sqlArray[i]))
-				this.forceDate(new_booking)
+		for(let i = 0; i < sqlArray.length; i++){
+			let new_booking = JSON.parse(JSON.stringify(sqlArray[i]))
+			this.forceDate(new_booking)
 
-				new_booking.DateIn = new_booking.DateIn.toString()
-				new_booking.DateOut = new_booking.DateOut.toString()
+			new_booking.DateIn = new_booking.DateIn.toString()
+			new_booking.DateOut = new_booking.DateOut.toString()
 
-				let keys = ''
-				let values = ''
-				for (let key in new_booking){
-					keys = keys + key + ', '
-					if(typeof new_booking[key] === 'string')
-						values = values + `'${new_booking[key]}'` + ', '
-					else
-						values = values + new_booking[key] + ', '
-				}
-				values = values.slice(0, -2) //trim off the extra comma and whitespace
-				keys = keys.slice(0, -2)
-				let qr = `INSERT INTO BookingObjects (${keys}) VALUES (${values})`
-				console.log(qr);
-				//if err s
-				await pool.request()
-					.query(qr)
-
-				
-					let qr2 = `Update dbo.KennelOccupancy SET Occupancy = 1 WHERE ID = ${new_booking.KennelID}`
-					console.log(qr2);
-
-					await pool.request()
-					.query(qr2)
-				
+			let keys = ''
+			let values = ''
+			for (let key in new_booking){
+				keys = keys + key + ', '
+				if(typeof new_booking[key] === 'string')
+					values = values + `'${new_booking[key]}'` + ', '
+				else
+					values = values + new_booking[key] + ', '
 			}
 
-			sql.close()
+			values = values.slice(0, -2) //trim off the extra comma and whitespace
+			keys = keys.slice(0, -2)
+			let qr = `INSERT INTO BookingObjects (${keys}) VALUES (${values})`
+			await pool.request()
+				.query(qr)
 
+			let qr2 = `Update dbo.KennelOccupancy SET Occupancy = 1 WHERE ID = ${new_booking.KennelID}`
+			await pool.request()
+				.query(qr2)
+		}
 
+		sql.close()
 
 		this.setState({
 			animal : animal,
@@ -328,7 +319,7 @@ export default class Main extends React.Component {
 		}
 
 	 toDatetime(date){ // THIS IS PROBABLY INFACT Date.toISOString
-			let formatted = `${date.getFullYear()}-${this.sqlParse(date.getMonth() + 1)}-${this.sqlParse(date.getDate())}T${this.sqlParse(date.getHours())}:${this.sqlParse(date.getMinutes())}:${this.sqlParse(date.getSeconds())}`
+			let formatted = `${date.getFullYear()}-${this.sqlParse(date.getMonth() + 1)}-${this.sqlParse(date.getDate())} ${this.sqlParse(date.getHours())}:${this.sqlParse(date.getMinutes())}:${this.sqlParse(date.getSeconds())}`
 			return formatted
 		}
 
@@ -363,7 +354,7 @@ export default class Main extends React.Component {
 	render(){
 		//order props neatly
 		//pay booking && booking is passed as undefined
-		console.log('screen',this.state.screen);
+		console.log(this.state.screen)
 		return(
 			<div style={{backgroundColor: "#D3D3D3"}}>
 				<Navbar updateScreen = {this.updateScreen} side = {this.toggle_side} dogs = {this.state.dog_list}/>

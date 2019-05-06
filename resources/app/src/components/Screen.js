@@ -14,6 +14,7 @@ import NewDog from "./pages/NewDog"
 import Scheduler from "./functions/Scheduler"
 import Help from "./pages/Help"
 import Admin from "./admin/admin"
+import Tax from "./admin/tax"
 import ExtraServices from "./admin/extraServices"
 
 
@@ -57,6 +58,8 @@ export default class Screen extends React.Component {
             return <Admin updateScreen={this.props.updateScreen} adminSetting={this.props.adminSetting} adminSettingTable = {this.props.adminSettingTable} />
         else if (this.state.screen === "extra_services")
             return <ExtraServices updateScreen={this.props.updateScreen} extraServices={this.props.extraServices} />
+        else if (this.state.screen === "tax")
+        	return <Tax />
 		else
             return (<Calendar updateScreen={this.props.updateScreen} kennel_map={this.props.kennel_map} print={this.props.print} boz={this.props.boz} payment={this.props.payment} currentId={this.props.currentId} bookings={this.props.bookings} adminSetting={this.props.adminSetting}/>)
 

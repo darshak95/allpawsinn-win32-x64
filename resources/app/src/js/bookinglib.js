@@ -12,6 +12,7 @@ module.exports = {
 		}
 
 		async function insertDog(booking){
+			console.log("I'm inside insertDog");
 			let pool = await sql.connect(sqlConfig)
 
 			for(let i = 0; i < booking.length; i++){
@@ -33,12 +34,14 @@ module.exports = {
 				values = values.slice(0, -2) //trim off the extra comma and whitespace
 				keys = keys.slice(0, -2)
 				let qr = `INSERT INTO BookingObjects (${keys}) VALUES (${values})`
+				console.log(qr);
 				//if err s
 				await pool.request()
 					.query(qr)
 
 				if (bool){
 					let qr2 = `Update dbo.KennelOccupancy SET Occupancy = 1 WHERE ID = ${new_booking.KennelID}`
+					console.log(qr2);
 
 					await pool.request()
 					.query(qr2)

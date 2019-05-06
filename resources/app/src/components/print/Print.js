@@ -25,6 +25,7 @@ export default class Print extends React.Component {
 				<div className = "box cal">
 						<h1>All Paws Inn</h1>
 						<table>
+						  <tbody>
 					      <tr>
 					        <th className="key">Kennel/Unit Ref:</th>
 					        <th>{current.KennelID}</th>
@@ -37,9 +38,11 @@ export default class Print extends React.Component {
 					        <th className="key">Animal Name:</th>
 					        <th>{current.AnimalName}</th>
 					      </tr>
+					       </tbody>
 					      </table>
 					      <br></br>
 					      <table>
+					       <tbody>
 					      <tr>
 					        <th className="key">Animal Type:</th>
 					        <th>Dog</th>
@@ -60,29 +63,31 @@ export default class Print extends React.Component {
 					        <th className="key">Age:</th>
 					        <th>{current.Age}</th>
 					      </tr>
+					      </tbody>
 					    </table>
 					    <br></br>
 					    <table>
+					      <tbody>
 					      <tr>
 					        <th className="key">DateIn:</th>
-					        <th>{current.DateIn.toString()}</th>
+					        <th>{!(current.CheckDateIn) ? null : current.CheckDateIn.toString()}</th>
 					      </tr>
 					      <tr>
 					        <th className="key">DateOut:</th>
-					        <th>{current.DateOut.toString()}</th>
+					        <th>{!(current.CheckDateOut) ? null : current.CheckDateOut.toString()}</th>
 					      </tr>
+					      </tbody>
 					    </table>
 					    <br></br>
 					    <table>
+					      <tbody>
 					      <tr>
 					        <th className="key">Notes:</th>
 					        <th>{current.Notes}</th>
 					      </tr>
-					      <tr>
-					      	<span className="print"><button className = "printButton" onClick = {this.handlePrintSubmit}> Print </button></span>
-					      	</tr>
-	    				</table>
-
+					       </tbody>
+					     </table>
+					      	<div className="print"><button className = "printButton" onClick = {this.handlePrintSubmit}> Print </button></div>
 				</div>
 			);
 		else

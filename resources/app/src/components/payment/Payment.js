@@ -55,6 +55,7 @@ export default class Payment extends React.Component {
             taxToPay: 0,
             totalToPay: 0,
             paymentFields: {},
+            bookingObjectFields: {},
             dayCareRate: 0,
             subTotal: 0,
             discount: 0,
@@ -92,7 +93,7 @@ export default class Payment extends React.Component {
     }
 
     async handleQueryClientDetails(taxToPay, totalToPay, otherChargesPaid, dayCareRate,
-        subTotal, discount, netBookingCharges, extraServices, accountBalance) {
+        subTotal, discount, netBookingCharges, extraServices, accountBalance, amountReceived) {
         const sqlConfig = require('../../js/sqlconfig')
         const sql = require('mssql')
         let pool = await sql.connect(sqlConfig)
@@ -109,13 +110,17 @@ export default class Payment extends React.Component {
         /*if(!result1.recordset[0]) {
 */
            let queryString4 = "Update dbo.KennelOccupancy SET Occupancy = 0 WHERE ID = " + id
-            await pool.request()
+           await pool.request()
             .query(queryString4)
 
-        let queryString5 = `UPDATE BookingObjects SET Status = '${this.props.booking.Status}',TotalToPay=${this.state.totalToPay} WHERE dbo.BookingObjects.BookingID = ${bookingId}`
-        queryString5 += `Update Payments SET OtherChargesPaid=${otherChargesPaid},TaxPaid=${taxToPay},TotalChargesPaid=${totalToPay},ExtraServices='${extraServices}',DayCareRate=${dayCareRate},SubTotal=${subTotal},Discount=${discount},NetBookingCharges=${netBookingCharges} WHERE BookingID=${bookingId}`;
-        let result5 = await pool.request()
-            .query(queryString5)
+             let queryString5 = `Select * From dbo.ClientDetails Where dbo.ClientDetails.ClientID = ${this.props.booking.ClientID[0]}`;
+             let result5 = await pool.request()
+                   .query(queryString5);  
+
+        let queryString6 = `UPDATE BookingObjects SET Status = '${this.props.booking.Status}',TotalToPay=${this.state.totalToPay} WHERE dbo.BookingObjects.BookingID = ${bookingId}`
+        queryString6 += `INSERT INTO Payments (BookingID,OtherChargesPaid,TaxPaid,TotalChargesPaid,ExtraServices,DayCareRate,SubTotal,Discount,NetBookingCharges,FirstName,LastName,ClientID,AmountReceived) Values ('${bookingId}',${otherChargesPaid},${taxToPay},${totalToPay},'${extraServices}',${dayCareRate},${subTotal},${discount},${netBookingCharges},'${result5.recordset[0].FirstName}','${result5.recordset[0].LastName}',${result5.recordset[0].ClientID}, ${amountReceived})`;
+        let result6 = await pool.request()
+            .query(queryString6)
 
        /* let queryString6 = `Select AccountBalance from dbo.ClientDetails WHERE ClientID =` + this.props.booking.ClientID[0];
         let result6 = await pool.request()
@@ -179,12 +184,47 @@ export default class Payment extends React.Component {
         let pool = await sql.connect(sqlConfig);
         let result = await pool.request()
             .query("SELECT top 1 * from dbo.Payments Where BookingID = " + bookingId);
+         
+
+        let result2 = await pool.request()
+            .query("SELECT * from dbo.bookingObjects Where BookingID = " + bookingId);
+
+        let result3 = await pool.request()
+            .query("SELECT * from Payments Where ClientID = " + this.props.booking.ClientID[0]);    
+
+
         sql.close();
-        payStatus = result.recordset[0]
-        if(!payStatus) {
-            return;
-        } else {
+        payStatus = result.recordset[0];
         
+        if(!payStatus && this.props.booking.AccountBalance === 0) {
+         
+            if(result3.recordset[0]) {
+              payStatus = true; 
+              let selectedExtraIDs = result3.recordset[0].ExtraServices.split(",");
+              let dummySelectedExtras = [];
+            selectedExtraIDs.forEach(obj => {
+            this.props.extraServices.forEach(obj2 => {
+                if (obj2.ID == obj) {
+                    dummySelectedExtras.push(obj2);
+                }
+            });
+        });
+        this.setState({
+            selectedExtras: dummySelectedExtras,
+            paymentFields: result3.recordset[0],
+            bookingObjectFields: result2.recordset[0]
+        });
+       } else {
+          this.setState({
+            bookingObjectFields: result2.recordset[0]
+         })
+         }          
+        } else if(!payStatus) {
+         this.setState({
+            bookingObjectFields: result2.recordset[0]
+         })
+        } else {
+           
         let selectedExtraIDs = result.recordset[0].ExtraServices.split(",");
         let dummySelectedExtras = [];
         selectedExtraIDs.forEach(obj => {
@@ -196,9 +236,11 @@ export default class Payment extends React.Component {
         });
         this.setState({
             selectedExtras: dummySelectedExtras,
-            paymentFields: result.recordset[0]
+            paymentFields: result.recordset[0],
+            bookingObjectFields: result2.recordset[0]
         });
       }
+      
     }
 
 
@@ -233,7 +275,7 @@ export default class Payment extends React.Component {
         else {
             rate = booking.BoardingRate
         }
-        let total = booking.NoDays * rate
+        let total = rate
 
         return total
     }
@@ -286,7 +328,7 @@ export default class Payment extends React.Component {
         
         this.handleQueryClientDetails(this.state.taxToPay, this.state.totalToPay, this.state.otherCharges, this.state.dayCareRate,
         this.state.subTotal, this.state.discount, this.state.netBookingCharges, 
-         extraServices.join(), accountBalance);
+         extraServices.join(), accountBalance, this.state.amountReceived);
 
         event.preventDefault();
 
@@ -476,8 +518,8 @@ export default class Payment extends React.Component {
     //}
 
     handleAmountReceived(event) {
-        let amountReceived = 0.00;
-        amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : parseFloat(0);
+        
+        let amountReceived = (event.currentTarget.form[6].value !== '') ? parseFloat(event.currentTarget.form[6].value) : "";
        
         /*  console.log('PROPS ACC BAL:', this.props.booking.AccountBalance);
         if(this.props.booking.AccountBalance === 0.00 || this.props.booking.AccountBalance === null) {
@@ -502,7 +544,6 @@ export default class Payment extends React.Component {
 
     }
     render() {
-  
           if(payStatus && this.props.booking.AccountBalance === 0.00) {
         
             return (
@@ -524,8 +565,8 @@ export default class Payment extends React.Component {
                                 <div className="col-sm-6"><b>Days:</b> {this.props.booking.NoDays}<br></br></div>
                             </div>
                             <div className="row">
-                                <div className="col-sm-6"><b>Date In:</b> {this.props.booking.DateIn.toString()}<br></br></div>
-                                <div className="col-sm-6"><b>Date Out:</b> {this.props.booking.DateOut.toString()}<br></br></div>
+                                <div className="col-sm-6"><b>Date In:</b> {!(this.state.bookingObjectFields.CheckDateIn) ? null : (this.state.bookingObjectFields.CheckDateIn).toString()}<br></br></div>
+                                <div className="col-sm-6"><b>Date Out:</b> {!(this.state.bookingObjectFields.CheckDateOut) ? null : (this.state.bookingObjectFields.CheckDateOut).toString()}<br></br></div>
                             </div>
                         </div>
                         <br></br>
@@ -598,8 +639,8 @@ export default class Payment extends React.Component {
                                 <div className="col-sm-6"><b>Days:</b> {this.props.booking.NoDays}<br></br></div>
                             </div>
                             <div className="row">
-                                <div className="col-sm-6"><b>Date In:</b> {this.props.booking.DateIn.toString()}<br></br></div>
-                                <div className="col-sm-6"><b>Date Out:</b> {this.props.booking.DateOut.toString()}<br></br></div>
+                                <div className="col-sm-6"><b>Date In:</b> {!(this.state.bookingObjectFields.CheckDateIn) ? null : (this.state.bookingObjectFields.CheckDateIn).toString()}<br></br></div>
+                                <div className="col-sm-6"><b>Date Out:</b> {!(this.state.bookingObjectFields.CheckDateOut) ? null : (this.state.bookingObjectFields.CheckDateOut).toString()}<br></br></div>
                             </div>
                         </div>
                         <br></br>

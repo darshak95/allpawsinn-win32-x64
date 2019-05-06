@@ -4,6 +4,13 @@
   margin: 0;
 }
 
+@media print {
+      body, html, #wrapper {
+          width: 143%;
+          height: auto;
+      }
+}
+
 *:focus {
   outline: none;
 }

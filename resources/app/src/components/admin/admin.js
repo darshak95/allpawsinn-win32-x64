@@ -25,9 +25,7 @@ export default class Admin extends React.Component {
         this.handleDeleteService = this.handleDeleteService.bind(this);
     }
 
-    /*componentDidMount() {
-        this.getAdminSettings()
-    }*/
+    
 
     async handleQuery(adminSetting) {
         let pool = await sql.connect(sqlConfig);

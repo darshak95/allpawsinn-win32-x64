@@ -10,6 +10,8 @@ import moment from 'moment';
 import Calendar from 'react-input-calendar';
 const booking_lib = require('../../js/bookinglib');
 const oneDay = 24*60*60*1000;
+const sqlConfig = require('../../js/sqlconfig')
+const sql = require('mssql')
 
 function create_date(datestr){
 	let dt_in = datestr.split('-')
@@ -71,6 +73,11 @@ export default class Booking extends React.Component {
 		this.dropdownSelected = this.dropdownSelected.bind(this)
 		this.handleStartDateChange = this.handleStartDateChange.bind(this)
 		this.handleEndDateChange = this.handleEndDateChange.bind(this)
+		this.sqlParse = this.sqlParse.bind(this)
+		this.toDatetime = this.toDatetime.bind(this)
+		this.dateNow = this.dateNow.bind(this)
+		this.dateOut = this.dateOut.bind(this)
+		this.forceDate = this.forceDate.bind(this)
 	}
 
 	handleStartDateChange(date) {
@@ -107,7 +114,7 @@ export default class Booking extends React.Component {
 			this.props.updateScreen("home")
 	}
 
-	handleSubmit(event){
+	async handleSubmit(event){
 		event.preventDefault();
 
 		let {dropdown_pick, book} = this.state;
@@ -130,12 +137,84 @@ export default class Booking extends React.Component {
 		book[dropdown_pick].KennelID = sql_obj.KennelID
 		this.props.bookings.push(book[dropdown_pick])
 
-		booking_lib.create_booking(sqlArray, true)
-		this.props.updateScreen("home")
+		
+			//booking_lib.create_booking(sqlArray, false)
+		if(!Number.isInteger(sqlArray.KennelID))
+			sqlArray.KennelID = sqlArray.KennelID*1
+		
+		let pool = await sql.connect(sqlConfig)
 
+		for(let i = 0; i < sqlArray.length; i++){
+			let new_booking = JSON.parse(JSON.stringify(sqlArray[i]))
+			this.forceDate(new_booking)
+
+			new_booking.DateIn = new_booking.DateIn.toString()
+			new_booking.DateOut = new_booking.DateOut.toString()
+
+			let keys = ''
+			let values = ''
+			for (let key in new_booking){
+				keys = keys + key + ', '
+				if(typeof new_booking[key] === 'string')
+					values = values + `'${new_booking[key]}'` + ', '
+				else
+					values = values + new_booking[key] + ', '
+			}
+
+			values = values.slice(0, -2) //trim off the extra comma and whitespace
+			keys = keys.slice(0, -2)
+			let qr = `INSERT INTO BookingObjects (${keys}) VALUES (${values})`
+			await pool.request()
+				.query(qr)
+
+			let qr2 = `Update dbo.KennelOccupancy SET Occupancy = 1 WHERE ID = ${new_booking.KennelID}`
+			await pool.request()
+				.query(qr2)
+		}
+
+		sql.close()
+
+		this.props.updateScreen('home');
 	}
 
-	submitAll(){
+	 sqlParse(val){ //sql requires date values to be in 02-07-2018 rather than 2-7-2017
+			if (val < 10)
+				return '0' + val
+			else
+				return val
+		}
+
+	 toDatetime(date){ // THIS IS PROBABLY INFACT Date.toISOString
+			let formatted = `${date.getFullYear()}-${this.sqlParse(date.getMonth() + 1)}-${this.sqlParse(date.getDate())} ${this.sqlParse(date.getHours())}:${this.sqlParse(date.getMinutes())}:${this.sqlParse(date.getSeconds())}`
+			return formatted
+		}
+
+	 dateNow(){
+			let dt = new Date ()
+			return dt
+		}
+
+	 dateOut(epoch){
+			//use an epoch converter to build the check out date
+			//epoch is to supposed to be the appointment duration
+			let dt = new Date (Date.now() + 604800000)
+			return dt
+		}
+
+	 forceDate(booking){
+			if(booking.DayCare){
+				booking.DateIn = this.toDatetime(new Date(Date.now()))
+				booking.DateOut = booking.DateIn
+			}
+			else{
+				booking.DateIn = this.toDatetime(new Date(Date.parse(booking.DateIn)))
+				booking.DateOut = this.toDatetime(new Date(Date.parse(booking.DateOut)))
+			}
+		}
+
+	
+
+	async submitAll(){
 
 		let {book} = this.state;
 
@@ -162,10 +241,45 @@ export default class Booking extends React.Component {
 			sqlArray.push(sql_obj)
 			book[i].BookingID = ++this.props.id_object.booking_id
 			this.props.bookings.push(book[i])
-		}
-		booking_lib.create_booking(sqlArray, true)
-		this.props.updateScreen("home")
+			if(!Number.isInteger(sqlArray.KennelID))
+			sqlArray.KennelID = sqlArray.KennelID*1
+		
+				let pool = await sql.connect(sqlConfig)
+
+				for(let i = 0; i < sqlArray.length; i++){
+					let new_booking = JSON.parse(JSON.stringify(sqlArray[i]))
+					this.forceDate(new_booking)
+
+					new_booking.DateIn = new_booking.DateIn.toString()
+					new_booking.DateOut = new_booking.DateOut.toString()
+
+					let keys = ''
+					let values = ''
+					for (let key in new_booking){
+						keys = keys + key + ', '
+						if(typeof new_booking[key] === 'string')
+							values = values + `'${new_booking[key]}'` + ', '
+						else
+							values = values + new_booking[key] + ', '
+					}
+
+					values = values.slice(0, -2) //trim off the extra comma and whitespace
+					keys = keys.slice(0, -2)
+					let qr = `INSERT INTO BookingObjects (${keys}) VALUES (${values})`
+					await pool.request()
+						.query(qr)
+
+					let qr2 = `Update dbo.KennelOccupancy SET Occupancy = 1 WHERE ID = ${new_booking.KennelID}`
+					await pool.request()
+						.query(qr2)
+				}
+
+				sql.close()
+
+				this.props.updateScreen('home');
 	}
+		}
+		
 
 	handleChange(event){//test this
 		let dummy = this.state.book

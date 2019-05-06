@@ -150,10 +150,10 @@ export default class Calendar extends React.Component {
                 panel = <Grid week ={this.state.week} paid={this.props.paid} currentUpdate={this.currentUpdate} updateScreen={this.props.updateScreen} print={this.props.print} current={current} payment={this.props.payment} adminSetting={this.props.adminSetting}/>
 			}
 			else
-                panel = <Layout kennel_map={this.props.kennel_map} bookings={bookings_list} current={current} range={range} adminSetting={this.props.adminSetting}/>
+                panel = <Layout kennel_map={this.props.kennel_map} bookings={bookings_list} current={current} range={range} adminSetting={this.props.adminSetting} updateScreen={this.props.updateScreen}/>
 		}
 		else{
-            panel = <List kennel_map={this.props.kennel_map} print={this.props.print} current={current} payment={this.props.payment} adminSetting={this.props.adminSetting}/>
+            panel = <List kennel_map={this.props.kennel_map} print={this.props.print} current={current} payment={this.props.payment} adminSetting={this.props.adminSetting} updateScreen={this.props.updateScreen}/>
 		}
 
 		if (bookings_list){
