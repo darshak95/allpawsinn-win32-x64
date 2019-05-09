@@ -133,7 +133,7 @@ export default class Layout extends React.Component {
     }
 
     render() {
-        console.log("I'm in layout")
+        
         //margin = {[20, 20]}
         //if date > current date map static grid items instead
         let { current, range } = this.state;

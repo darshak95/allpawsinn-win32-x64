@@ -26,15 +26,19 @@ export default class Help extends React.Component {
 					<hr></hr>
 					<b>Managing Multiple Boarding Bookings:</b> <span>Click an animal on the dropdown list <b>>></b> Edit booking details <b>>></b> Click Submit <b>(</b>Submit All will submit all of the animals at once<b>)</b></span>
 					<hr></hr>
-					<b>Daycare Booking Check-Out (Grid Only):</b> <span>Click $ sign in the Check-Out column</span>
+					<b>Daycare Booking Check-In (Grid Only):</b> <span>Click '-' in the Action column</span>
 					<hr></hr>
-					<b>Print Daycare Booking (Grid Only):</b> <span>Click printer sign in the Print column</span>
+					<b>Daycare Booking Check-Out (Grid Only):</b> <span>Click '+' in the Action column</span>
+					<hr></hr>
+					<b>Payment Daycare Booking (Grid Only):</b> <span>Click $ sign in the Pay column</span>
+					<hr></hr>
+					<b>Print Daycare Booking (Grid Only):</b> <span>Click printer sign in the Print column or Click tick-sign in the Pay column</span>
 					<hr></hr>
 					<b>Add New Dog to a Client:</b> <span>Search Client or Dog Name <b>>></b> Click Client Profile on Animal Details <b>>></b> Click add dog <b>>></b></span>
 					<hr></hr>
-					<b>New Client:</b> <span>Add the client from New Client page <b>>></b> After submit, refresh the program</span>
+					<b>New Client:</b> <span>Add the client from New Client page <b>>></b> After submit, wait for 5 seconds</span>
 					<hr></hr>
-					<b>Update Client Information:</b> <span>Search Client or Dog Name <b>>></b> Click Client Profile on Animal Details <b>>></b> After submit, refresh the program</span>
+					<b>Update Client Information:</b> <span>Search Client or Dog Name <b>>></b> Click Client Profile on Animal Details <b>>></b> After submit, wait for 5 seconds</span>
 					<hr></hr>
 					<b>Scheduler:</b> <span>Click Scheduler on the Navigation Bar <b>(</b>In order to see a booking in the list, the dog must be Checked-In<b>)</b></span>
 					<hr></hr>
@@ -64,13 +68,13 @@ export default class Help extends React.Component {
 					<div className = "box" id = "Help">
 					<h4>Title Bar Colour Codes</h4>
 					<hr></hr>
-					<b>Red:</b> <span>Close</span>
+					<b>Red (With an X Mark):</b> <span>Close</span>
 					<hr></hr>
-					<b>Green:</b> <span>Maximize</span>
+					<b>Green (With arrows on the corners):</b> <span>Maximize</span>
 					<hr></hr>
-					<b>Yellow:</b> <span>Minimize</span>
+					<b>Yellow (With a '-' sign):</b> <span>Minimize</span>
 					<hr></hr>
-					<b>Violet:</b> <span>Refresh</span>
+					<b>Violet (With two circular arrows):</b> <span>Refresh</span>
 				</div>
 				<br></br>
 				<div className = "box" id = "Help">
@@ -85,7 +89,11 @@ export default class Help extends React.Component {
 					<hr></hr>
 					<li>After each marking/unmarking operation click outside the grid area</li>
 					<hr></hr>
-					<li>In the Payment page, when Take Payment is clicked, the booking will be checked-out</li>
+					<li>Check-In and Check-Out actions are separate from payments</li>
+					<hr></hr>
+					<li>In the Daycare Grid page, the $ sign in pay column indicates the user has some money in his account balance left to be paid</li>
+					<hr></hr>
+					<li>In the Daycare Grid page, the tick-sign in pay column indicates the user has nothing left in his account balance</li>
 					<hr></hr>
 					<li>In the Daycare Grid page, only future days (including today) are markable</li>
 					<hr></hr>

@@ -157,9 +157,9 @@ export default class Grid extends React.Component {
         let result = await pool.request()
              .query(queryString);
           } else if(stat === "CO") {
-              console.log("CO");
+            
               let queryString2 = `UPDATE dbo.BookingObjects SET dbo.BookingObjects.Status = '${stat}',dbo.BookingObjects.CheckDateOut='${(new Date(Date.now())).toString()}' WHERE dbo.BookingObjects.BookingID = ${bookingId}`
-              console.log(queryString2);
+        
               let result2 = await pool.request()
                    .query(queryString2);
   
