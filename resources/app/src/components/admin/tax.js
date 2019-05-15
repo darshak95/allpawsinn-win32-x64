@@ -9,42 +9,35 @@ export default class Tax extends React.Component {
         super(props);
         this.state = {
         	taxSetting: {
-            FirstName: '',
-            LastName: '',
-            Quarter: 0,
-            Year: 0,
+            Month: 0,
+            Year: 0
           },
-          FirstName: '',
-          LastName: '',
+          Month: '',
           totalTaxPaid: 0,
           totalAmountPaid: 0
         }
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.handlePrint = this.handlePrint.bind(this);
+        this.getMonthByIndex = this.getMonthByIndex.bind(this);
     }
 
     async handleQuery(taxSetting) {
       let pool = await sql.connect(sqlConfig);
-      let FirstName = taxSetting.FirstName
-      let LastName = taxSetting.LastName
-      let Quarter = parseInt(taxSetting.Quarter)
+      let Month = parseInt(taxSetting.Month)
       let Year = parseInt(taxSetting.Year)
-      let month1 = 3*Quarter
-      let month2 = (3*Quarter)-1
-      let month3 = (3*Quarter)-2
       let query = ''
       
-      if(FirstName === '' && LastName === '' && Quarter != 0) {
-        query = `SELECT SUM(TaxPaid) as TaxPaid, SUM(AmountReceived) as TotalChargesPaid from dbo.Payments Where Year(PaymentDate)=${Year} AND Month(PaymentDate) IN(${month1}, ${month2}, ${month3})`;
+      if(Month != 0) {
+        query = `SELECT SUM(TaxPaid) as TaxPaid, SUM(AmountReceived) as TotalChargesPaid from dbo.Payments Where Year(PaymentDate)=${Year} AND Month(PaymentDate)=${Month}`;
       }
 
-      else if(FirstName === '' && LastName === '' && Quarter == 0) {
+      else if(Month == 0) {
         query = `SELECT SUM(TaxPaid) as TaxPaid, SUM(AmountReceived) as TotalChargesPaid from dbo.Payments Where Year(PaymentDate)=${Year}`;
       }
 
       else {
-        query = `SELECT SUM(TaxPaid) as TaxPaid, SUM(AmountReceived) as TotalChargesPaid, FirstName, LastName from dbo.Payments Where FirstName='${FirstName}' AND LastName='${LastName}' AND Year(PaymentDate)=${Year} AND Month(PaymentDate) IN(${month1}, ${month2}, ${month3}) GROUP BY FirstName, LastName`;
+        query = `SELECT SUM(TaxPaid) as TaxPaid, SUM(AmountReceived) as TotalChargesPaid from dbo.Payments Where Year(PaymentDate)=${Year} AND Month(PaymentDate)=${Month}`;
       }
 
       let result = await pool.request()
@@ -54,20 +47,17 @@ export default class Tax extends React.Component {
       sql.close();
       if(!result.recordset[0].TaxPaid){
       	this.setState({
-      	FirstName: FirstName,
-      	LastName: LastName,
-      	totalTaxPaid: "The user has not paid any tax in this quarter",
-      	totalAmountPaid: "The user has not paid any amount in this quarter"
+      	totalTaxPaid: "No taxes in this month",
+      	totalAmountPaid: "No amount in this month",
+        Month: Month
       	})
       } else {
       this.setState({
-      	FirstName: FirstName,
-      	LastName: LastName,
       	totalTaxPaid: result.recordset[0].TaxPaid,
-      	totalAmountPaid: result.recordset[0].TotalChargesPaid
+      	totalAmountPaid: result.recordset[0].TotalChargesPaid,
+        Month: Month
        })
       }
-
      }
 
     handlePrint(event) {
@@ -89,8 +79,50 @@ export default class Tax extends React.Component {
 
     }
 
+    getMonthByIndex(month) {
+        switch (month) {
+            case 1:
+                return 'January';
+                break;
+            case 2:
+                return 'February';
+                break;
+            case 3:
+                return 'March';
+                break;
+            case 4:
+                return 'April';
+                break;
+            case 5:
+                return 'May';
+                break;
+            case 6:
+                return 'June';
+                break;
+            case 7:
+                return 'July';
+                break;
+            case 8:
+                return 'August';
+                break;
+            case 9:
+                return 'September';
+                break;
+            case 10:
+                return 'October';
+                break;
+            case 11:
+                return 'November';
+                break;
+            case 12:
+                return 'December';
+                break;
+        }
+    }
+
 
  render() {
+  let month  = this.getMonthByIndex(this.state.Month);
         return (
             <div>
                 <div className="box cal" id="admin">
@@ -100,16 +132,8 @@ export default class Tax extends React.Component {
                         <form>
                             <div className="box">
                                 <div className="row">
-                                    <div className="col-sm-6"><b>First Name: </b><br></br></div>
-                                    <div className="col-sm-6"><input name="FirstName" type="text" value={this.state.taxSetting.FirstName} onChange={this.handleChange} /><br></br></div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-sm-6"><b>Last Name: </b><br></br></div>
-                                    <div className="col-sm-6"><input name="LastName" type="text" value={this.state.taxSetting.LastName} onChange={this.handleChange} /><br></br></div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-sm-6"><b>Quarter(1-4): </b><br></br></div>
-                                    <div className="col-sm-6"><input name="Quarter" type="number" value={this.state.taxSetting.Quarter} onChange={this.handleChange} /><br></br></div>
+                                    <div className="col-sm-6"><b>Month: </b><br></br></div>
+                                    <div className="col-sm-6"><input name="Month" type="number" value={this.state.taxSetting.Month} onChange={this.handleChange} /><br></br></div>
                                 </div>
                                 <div className="row">
                                     <div className="col-sm-6"><b>Year: </b><br></br></div>
@@ -124,39 +148,33 @@ export default class Tax extends React.Component {
                         </form>
                     </div>
                       
-                      {this.state.totalTaxPaid ? 
+                      {this.state.totalTaxPaid ?  ((this.state.Month) ?
 
-                        ((this.state.taxSetting.FirstName==='') ?
-                          <div>
+                       <div>
                          <div>
                       <br></br>
-                      <br></br>              
-                          <div>
-                     <p className="text-info"> {'ALL PAWS INN TAX INFORMATION:'} </p>
-                   </div>                 
-                   <div>
+                      <br></br>
+                      <div>
+                       <p className="text-info">{`All Paws Inn Tax for the year ${this.state.taxSetting.Year} and Month ${month}`}</p>
+                       </div>                  
+                     <div>
                      <p className="font-weight-bold"> Total Tax Paid: $</p>
                      <p className="text-info">{this.state.totalTaxPaid}</p>
-                   </div>                 
-                   <div>
+                     </div>                 
+                     <div>
                      <p className="font-weight-bold"> Total Amount Paid: $</p>
                      <p className="text-info">{this.state.totalAmountPaid}</p>
-                   </div>                 
+                     </div>                 
                     </div>
-                    <span className="print"><button className="profileButton" onClick={this.handlePrint}> Print </button></span>
-                    </div> : 
+                 <span className="print"><button className="profileButton" onClick={this.handlePrint}> Print </button></span>
+                 </div> : 
                        <div>
                       	<div>
                       <br></br>
                       <br></br>
 	                 <div>
-	                   <p className="font-weight-bold"> First Name: </p>
-	                   <p className="text-info"> {this.state.FirstName} </p>
-	                 </div>                 
-	                 <div>
-	                   <p className="font-weight-bold"> Last Name: </p>
-	                   <p className="text-info"> {this.state.LastName} </p>
-	                 </div>                 
+                     <p className="text-info">{`All Paws Inn Tax for the year ${this.state.taxSetting.Year}`}</p>
+                   </div>                  
 	                 <div>
 	                   <p className="font-weight-bold"> Total Tax Paid: $</p>
 	                   <p className="text-info">{this.state.totalTaxPaid}</p>

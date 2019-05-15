@@ -234,7 +234,7 @@ export default class ClientProfile extends React.Component {
 							</div><br></br>
 
 							<div className="row">
-								<div className="col-sm-8"><h6>Postcode:</h6><input name = "Postcode" type = "text" placeholder = "Edit Postcode" defaultValue ={!Array.isArray(this.props.animal[0].PostcodeZIP) ? '' : this.props.animal[0].PostcodeZIP[0]}/></div>
+								<div className="col-sm-8"><h6>Postcode:</h6><input name = "Postcode" type = "text" placeholder = "Edit Postcode" defaultValue ={!Array.isArray(this.props.animal[0].PostcodeZIP) ? '' : this.props.animal[0].PostcodeZIP}/></div>
 							</div><br></br>
 
 							<div className="row">
@@ -244,7 +244,7 @@ export default class ClientProfile extends React.Component {
 						</div>
 						<div className="row">
 						<div id="editInput">
-							<div className="col-sm-4"><input className = "profileButton" type = "Submit" value = "Submit"/> </div>
+							<div className="col-sm-4"><input className = "profileButton" type = "Submit"defaultValue = "Submit"/> </div>
 						</div>
 					</div>
 					</form>

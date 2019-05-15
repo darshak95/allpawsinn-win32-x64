@@ -119,6 +119,7 @@ export default class Grid extends React.Component {
             .then(() => {
                 this.deleteRows(bookingId); 
             })
+            sql.close();
         this.props.updateScreen("home");
     }
 

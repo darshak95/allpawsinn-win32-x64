@@ -590,7 +590,7 @@ export default class Payment extends React.Component {
                             <hr></hr>
                             <div className="row">
                                 <div className="col-sm-6"><b>NY State Tax   $</b>{this.state.paymentFields.TaxPaid}<br></br></div>
-                                <div className="col-sm-6"><b>Total To Pay   $</b>{this.state.paymentFields.TotalChargesPaid}<br></br></div>
+                                <div className="col-sm-6"><b>Total Charges   $</b>{this.state.paymentFields.TotalChargesPaid}<br></br></div>
                             </div>
                             <hr></hr>
                             <div className="row">
@@ -681,7 +681,7 @@ export default class Payment extends React.Component {
                             <hr></hr>
                             <div className="row">
                                 <div className="col-sm-6"><b>NY State Tax   $</b><input disabled id="txtTax" name="tax" type="text" value={this.state.taxToPay} /><br></br></div>
-                                <div className="col-sm-6"><b>Total To Pay   $</b><input disabled id="txtTotal" style={{backgroundColor: "green", fontWeight:"bold",color:"white"}} name="total" type="text" value={!this.props.booking.TotalToPay ? this.state.totalToPay : this.props.booking.TotalToPay} /><br></br></div>
+                                <div className="col-sm-6"><b>Total Charges   $</b><input disabled id="txtTotal" style={{backgroundColor: "green", fontWeight:"bold",color:"white"}} name="total" type="text" value={!this.props.booking.TotalToPay ? this.state.totalToPay : this.props.booking.TotalToPay} /><br></br></div>
                             </div>
                             <hr></hr>
                                
@@ -723,7 +723,7 @@ export default class Payment extends React.Component {
                             <hr style={{border: "none", borderBottom: "1px solid black"}}></hr>
                             <div className="row">
                                 {/*<div className="col-sm-6"><b>Book Balance $</b><input disabled id="BookBal" name="book" type="number" value={!this.props.booking.BookingCharge ? '-' : this.props.booking.BookingCharge} /><br></br></div>*/}
-                                <div className="col-sm-6"><b>Acct Balance $</b><input disabled id="AcctBal" name="acctbal" type="number" value={this.props.booking.AccountBalance} /><br></br></div>
+                                <div className="col-sm-6"><b>Prev Balance $</b><input disabled id="AcctBal" name="acctbal" type="number" value={this.props.booking.AccountBalance} /><br></br></div>
                                 <div className="col-sm-6"><b>Amt Received $</b><input id="AmtRecv" name="total" type="number" min='0' max={this.props.booking.AccountBalance} onChange={this.handleAmountReceived} value={this.state.amountReceived} /><br></br></div>
                             </div>
 
